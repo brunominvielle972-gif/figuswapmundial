@@ -1,0 +1,165 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the profile was created"
+        }
+      },
+      "required": ["uid", "displayName", "email", "createdAt"]
+    },
+    "StickerInstance": {
+      "title": "StickerInstance",
+      "description": "A sticker in a user's tournament album catalog, either repeated or needed",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the owner of this sticker instance"
+        },
+        "ownerName": {
+          "type": "string",
+          "description": "Cached display name of the sticker owner for faster queries"
+        },
+        "code": {
+          "type": "string",
+          "description": "Unique identifier of the sticker, e.g. ARG-10, BRA-09"
+        },
+        "playerName": {
+          "type": "string",
+          "description": "Name of the player depicted on the sticker"
+        },
+        "country": {
+          "type": "string",
+          "description": "Country / Team of the player"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["repetida", "faltante"],
+          "description": "Condition of the sticker: repetida (repeated/available for trade) or faltante (needed/wanted)"
+        },
+        "isShiny": {
+          "type": "boolean",
+          "description": "True if this is a shiny/special sticker"
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Quantity of stickers of this code the user has"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this record was updated"
+        }
+      },
+      "required": ["ownerId", "ownerName", "code", "playerName", "country", "type", "isShiny", "quantity", "updatedAt"]
+    },
+    "TradeProposal": {
+      "title": "TradeProposal",
+      "description": "A structured sticker trade agreement proposed from one user to another",
+      "type": "object",
+      "properties": {
+        "proposerId": {
+          "type": "string",
+          "description": "UID of the user proposing the trade"
+        },
+        "proposerName": {
+          "type": "string",
+          "description": "DisplayName of the proposer"
+        },
+        "receiverId": {
+          "type": "string",
+          "description": "UID of the user receiving the trade proposal"
+        },
+        "receiverName": {
+          "type": "string",
+          "description": "DisplayName of the receiver"
+        },
+        "offeredStickers": {
+          "type": "array",
+          "description": "Sticker codes offered by the proposer"
+        },
+        "requestedStickers": {
+          "type": "array",
+          "description": "Sticker codes requested from the receiver"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "rejected", "completed", "cancelled"],
+          "description": "Current state of the trade"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when trade was proposed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last modification"
+        }
+      },
+      "required": ["proposerId", "proposerName", "receiverId", "receiverName", "offeredStickers", "requestedStickers", "status", "createdAt", "updatedAt"]
+    },
+    "TradeMessage": {
+      "title": "TradeMessage",
+      "description": "Internal discussion messages associated with a secure trade proposal",
+      "type": "object",
+      "properties": {
+        "senderId": {
+          "type": "string",
+          "description": "UID of the message sender"
+        },
+        "senderName": {
+          "type": "string",
+          "description": "DisplayName of the sender"
+        },
+        "text": {
+          "type": "string",
+          "description": "Message text contents"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of message"
+        }
+      },
+      "required": ["senderId", "senderName", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user registration details"
+    },
+    "/stickers/{stickerId}": {
+      "schema": "StickerInstance",
+      "description": "Flat directory of owned stickers"
+    },
+    "/trades/{tradeId}": {
+      "schema": "TradeProposal",
+      "description": "Sticker exchange transactions"
+    },
+    "/trades/{tradeId}/messages/{messageId}": {
+      "schema": "TradeMessage",
+      "description": "Coordination messages for a specific trade proposal"
+    }
+  }
+}

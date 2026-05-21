@@ -1,0 +1,9 @@
+{
+  "apiKey": "mock-api-key-placeholder",
+  "authDomain": "mock-auth-domain-placeholder",
+  "projectId": "mock-project-id-placeholder",
+  "storageBucket": "mock-bucket-placeholder",
+  "messagingSenderId": "000000000000",
+  "appId": "1:000000000:web:000000000",
+  "firestoreDatabaseId": "(default)"
+}

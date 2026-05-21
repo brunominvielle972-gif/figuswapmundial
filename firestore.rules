@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE SECURITY PRIMITIVES ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- USERS COLLECTION SECURING ---
+    match /users/{userId} {
+      allow read: if isSignedIn(); // Users need to see other collector profiles to map names
+      allow write: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(incoming());
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'createdAt'])
+        && data.keys().size() == 4
+        && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() <= 100
+        && data.email is string && data.email.size() <= 100;
+    }
+
+    // --- STICKERS CATALOG SECURING ---
+    match /stickers/{stickerId} {
+      allow read, list: if isSignedIn(); // Free search capabilities are needed for finding collectors
+      
+      allow create: if isSignedIn() 
+        && incoming().ownerId == request.auth.uid 
+        && isValidSticker(incoming())
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isSignedIn() 
+        && existing().ownerId == request.auth.uid 
+        && incoming().ownerId == request.auth.uid 
+        && isValidSticker(incoming())
+        && incoming().updatedAt == request.time;
+
+      allow delete: if isSignedIn() 
+        && existing().ownerId == request.auth.uid;
+    }
+
+    function isValidSticker(data) {
+      return data.keys().hasAll(['ownerId', 'ownerName', 'code', 'playerName', 'country', 'type', 'isShiny', 'quantity', 'updatedAt'])
+        && data.keys().size() == 9
+        && data.code is string && data.code.size() <= 10
+        && data.playerName is string && data.playerName.size() <= 80
+        && data.country is string && data.country.size() <= 50
+        && (data.type == 'repetida' || data.type == 'faltante')
+        && data.isShiny is bool
+        && data.quantity is int && data.quantity >= 1 && data.quantity <= 100;
+    }
+
+    // --- TRADE AGREEMENTS SECURING ---
+    match /trades/{tradeId} {
+      // Secure List & Get queries: Only the proposer or receiver can ever see this private trade
+      allow read: if isSignedIn() 
+        && (resource.data.proposerId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+
+      allow create: if isSignedIn() 
+        && incoming().proposerId == request.auth.uid 
+        && isValidTrade(incoming())
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time;
+
+      // Tiered Identity Logic for Updating Trades
+      allow update: if isSignedIn() 
+        && (existing().proposerId == request.auth.uid || existing().receiverId == request.auth.uid)
+        && isValidTrade(incoming())
+        && (
+          // Action 1: Receiver accepts or rejects
+          (request.auth.uid == existing().receiverId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          // Action 2: Either party completes or cancels the trade (Terminal lock transition handled inside helper is needed or in client)
+          (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        )
+        && incoming().updatedAt == request.time;
+    }
+
+    function isValidTrade(data) {
+      return data.keys().hasAll(['id', 'proposerId', 'proposerName', 'receiverId', 'receiverName', 'offeredStickers', 'requestedStickers', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().size() == 10
+        && data.proposerId is string
+        && data.receiverId is string
+        && (data.status == 'pending' || data.status == 'accepted' || data.status == 'rejected' || data.status == 'completed' || data.status == 'cancelled')
+        && data.offeredStickers is list
+        && data.requestedStickers is list;
+    }
+
+    // --- TRADE MESSAGES (SUBCOLLECTION) SECURING ---
+    match /trades/{tradeId}/messages/{messageId} {
+      // Subcollection Relational Gate (Master Gate rule checks against parent's participants)
+      allow read, list, create: if isSignedIn() 
+        && (
+          get(/databases/$(database)/documents/trades/$(tradeId)).data.proposerId == request.auth.uid 
+          || get(/databases/$(database)/documents/trades/$(tradeId)).data.receiverId == request.auth.uid
+        );
+    }
+
+  }
+} rules_version = '2';

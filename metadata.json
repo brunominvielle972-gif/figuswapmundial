@@ -1,0 +1,8 @@
+{
+  "name": "Intercambio de Figus",
+  "description": "Plataforma para intercambiar figuritas de la colección Panini del Mundial, con tablilla oficial de control del 1 al 20 por país, chat integrado, buscador y lista de amigos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

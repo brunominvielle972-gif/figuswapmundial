@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FiguSwap Mundial</string>
+    <string name="title_activity_main">FiguSwap Mundial</string>
+    <string name="package_name">com.intercambiofigus.app</string>
+    <string name="custom_url_scheme">com.intercambiofigus.app</string>
+</resources>
