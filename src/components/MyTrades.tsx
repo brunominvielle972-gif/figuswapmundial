@@ -43,7 +43,9 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
   const [proposalSuccess, setProposalSuccess] = useState<string | null>(null);
 
   const handleCopyLink = () => {
-    const url = typeof window !== 'undefined' ? window.location.href : "https://ais-pre-fknnxpd4yizdxu4wifamxw-327281564553.us-west1.run.app";
+    if (!currentUser) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : "https://ais-pre-fknnxpd4yizdxu4wifamxw-327281564553.us-west1.run.app";
+    const url = `${origin}?invite=${currentUser.uid}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);

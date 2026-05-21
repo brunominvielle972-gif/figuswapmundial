@@ -36,7 +36,8 @@ import {
   addDoc, 
   query, 
   where,
-  deleteDoc
+  deleteDoc,
+  getDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -50,6 +51,8 @@ interface AppContextType {
   activeTradeId: string | null;
   isFirebaseActive: boolean;
   friendRequests: FriendRequest[];
+  connectionNotification: string | null;
+  clearConnectionNotification: () => void;
   switchSimUser: (userId: string) => void;
   createNewProfile: (name: string, email: string) => void;
   addSticker: (sticker: Omit<Sticker, 'id' | 'ownerId' | 'ownerName' | 'updatedAt'>) => void;
@@ -105,6 +108,103 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeTradeId, setActiveTradeId] = useState<string | null>(null);
   const [currentTradeMessages, setCurrentTradeMessages] = useState<TradeMessage[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [connectionNotification, setConnectionNotification] = useState<string | null>(null);
+
+  const clearConnectionNotification = () => setConnectionNotification(null);
+
+  // Check for invite parameter in URL on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteUid = urlParams.get('invite');
+    if (inviteUid) {
+      console.log("Detected invite query parameter from UID:", inviteUid);
+      localStorage.setItem('pending_invite_by', inviteUid);
+      
+      // Clean query parameter from address bar
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
+    }
+  }, []);
+
+  // Process any pending invites when currentUser and users are loaded, or query FireStore
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const pendingInviterUid = localStorage.getItem('pending_invite_by');
+    if (!pendingInviterUid) return;
+
+    // A user cannot invite themselves
+    if (pendingInviterUid === currentUser.uid) {
+      localStorage.removeItem('pending_invite_by');
+      return;
+    }
+
+    // Check if the connection exists already
+    const checkAndConnect = (inviterName: string) => {
+      const connectionExists = friendRequests.some(r => 
+        (r.senderId === currentUser.uid && r.receiverId === pendingInviterUid) ||
+        (r.senderId === pendingInviterUid && r.receiverId === currentUser.uid)
+      );
+
+      if (!connectionExists) {
+        const newRequest: FriendRequest = {
+          id: "req_auto_" + Math.random().toString(36).substr(2, 9),
+          senderId: pendingInviterUid,
+          senderName: inviterName,
+          receiverId: currentUser.uid,
+          receiverName: currentUser.displayName,
+          status: 'accepted', // Auto-accepted so they are connected!
+          createdAt: new Date().toISOString()
+        };
+
+        if (isRealFirebase && db) {
+          setDoc(doc(db, 'friendRequests', newRequest.id), newRequest)
+            .then(() => {
+              setConnectionNotification(`¡Te conectaste con @${inviterName}! Ya pueden proponer canjes.`);
+              localStorage.removeItem('pending_invite_by');
+            })
+            .catch(err => {
+              console.error("Error setting friend request:", err);
+            });
+        } else {
+          const existing = JSON.parse(localStorage.getItem('sticker_friend_requests') || '[]');
+          existing.push(newRequest);
+          localStorage.setItem('sticker_friend_requests', JSON.stringify(existing));
+          setFriendRequests(existing);
+          setConnectionNotification(`¡Te conectaste con @${inviterName}! Ya pueden proponer canjes.`);
+          localStorage.removeItem('pending_invite_by');
+        }
+      } else {
+        localStorage.removeItem('pending_invite_by');
+      }
+    };
+
+    // Find the inviter
+    const localInviter = users.find(u => u.uid === pendingInviterUid);
+    if (localInviter) {
+      checkAndConnect(localInviter.displayName);
+    } else if (isRealFirebase && db) {
+      // Direct Firebase lookup for robust connection
+      getDoc(doc(db, 'users', pendingInviterUid))
+        .then(docSnap => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as UserProfile;
+            checkAndConnect(data.displayName);
+          } else {
+            console.warn("Inviter profile not found in DB");
+            localStorage.removeItem('pending_invite_by');
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching inviter profile:", err);
+          localStorage.removeItem('pending_invite_by');
+        });
+    } else {
+      // In simulation mode, if not found, we can just pre-seed the user name as "Amigo Invitador"
+      checkAndConnect("Amigo Invitador");
+    }
+  }, [currentUser, users, friendRequests]);
 
   // Startup cleanup to ensure legacy storage has no old simulator accounts
   useEffect(() => {
@@ -219,7 +319,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setTrades(simGetTrades().filter(t => !isFakeUid(t.proposerId) && !isFakeUid(t.receiverId)));
         setUsers(simGetUsers().filter(u => !isFakeUid(u.uid) && !isFakeUser(u.displayName)));
 
-        setFriendRequests([]);
+        const existingRequests = JSON.parse(localStorage.getItem('sticker_friend_requests') || '[]');
+        setFriendRequests(existingRequests);
       };
       
       syncSim();
@@ -465,6 +566,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       activeTradeId,
       isFirebaseActive: isRealFirebase,
       friendRequests,
+      connectionNotification,
+      clearConnectionNotification,
       switchSimUser,
       createNewProfile,
       addSticker,

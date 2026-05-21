@@ -8,8 +8,10 @@ import { AppProvider, useApp } from './context/AppContext';
 import { isRealFirebase } from './firebase';
 import { 
   Trophy, Handshake, BookOpen, ShieldCheck, HelpCircle, 
-  User, RefreshCw, LogIn, LogOut, CheckCircle2, ChevronRight
+  User, RefreshCw, LogIn, LogOut, CheckCircle2, ChevronRight,
+  Sparkles, X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import MyCatalog from './components/MyCatalog';
 import MyTrades from './components/MyTrades';
 
@@ -18,7 +20,9 @@ function AppContent() {
     currentUser, 
     createNewProfile,
     isFirebaseActive,
-    trades
+    trades,
+    connectionNotification,
+    clearConnectionNotification
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'album' | 'trades'>('album');
@@ -294,6 +298,35 @@ function AppContent() {
           )}
         </button>
       </nav>
+
+      {/* Connection notification toast for instant invite connections */}
+      <AnimatePresence>
+        {connectionNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-24 left-4 right-4 md:left-auto md:right-8 md:bottom-8 bg-[#0b1c11] border-2 border-brand-emerald/40 text-slate-100 p-4.5 rounded-2xl shadow-[0_10px_35px_rgba(16,185,129,0.35)] z-50 flex items-center justify-between gap-4 max-w-sm border-l-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 rounded-xl flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 animate-pulse text-brand-emerald" />
+              </div>
+              <div className="text-left">
+                <b className="text-[11px] font-black uppercase text-brand-emerald tracking-wider block">¡Conexión Exitosa!</b>
+                <p className="text-[11.5px] text-slate-300 font-semibold leading-relaxed mt-0.5">{connectionNotification}</p>
+              </div>
+            </div>
+            <button
+              onClick={clearConnectionNotification}
+              className="text-slate-400 hover:text-white p-1 hover:bg-white/5 rounded-lg transition-all cursor-pointer shrink-0"
+              type="button"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
