@@ -26,7 +26,8 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
     setActiveTradeId,
     users,
     stickers,
-    proposeTrade
+    proposeTrade,
+    connectUserByCode
   } = useApp();
 
   const [messageText, setMessageText] = useState<string>("");
@@ -41,6 +42,42 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
   const [newRequestCode, setNewRequestCode] = useState<string>("");
   const [proposalError, setProposalError] = useState<string | null>(null);
   const [proposalSuccess, setProposalSuccess] = useState<string | null>(null);
+
+  // Friend code connection state
+  const [friendCodeInput, setFriendCodeInput] = useState<string>("");
+  const [connectingByCode, setConnectingByCode] = useState<boolean>(false);
+  const [connectStatus, setConnectStatus] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleConnectByCode = async (customCode?: string) => {
+    const codeToConnect = customCode || friendCodeInput;
+    if (!codeToConnect.trim() || connectingByCode) return;
+
+    setConnectingByCode(true);
+    setConnectStatus(null);
+
+    try {
+      const result = await connectUserByCode(codeToConnect);
+      if (result.success) {
+        setConnectStatus({
+          success: true,
+          message: result.error || `¡Listo, campeón! Te conectaste exitosamente con @${result.displayName || "tu amigo"}.`
+        });
+        setFriendCodeInput("");
+      } else {
+        setConnectStatus({
+          success: false,
+          message: result.error || "Ocurrió un error al intentar conectarse."
+        });
+      }
+    } catch (e: any) {
+      setConnectStatus({
+        success: false,
+        message: "Error de conexión. Intentá de nuevo."
+      });
+    } finally {
+      setConnectingByCode(false);
+    }
+  };
 
   const getInviteUrl = () => {
     if (!currentUser) return "";
@@ -262,6 +299,35 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
             >
               🔗 {inviteUrl}
             </a>
+          </div>
+
+          {/* Pegar Código/Enlace del Amigo */}
+          <div className="mt-2.5 border-t border-blue-500/10 pt-3 flex flex-col gap-2">
+            <label className="text-[10px] font-black uppercase text-slate-300 tracking-wider flex items-center gap-1">
+              🔌 ¿Tu amigo te mandó su código o enlace? Pegalo abajo:
+            </label>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input
+                type="text"
+                value={friendCodeInput}
+                onChange={(e) => setFriendCodeInput(e.target.value)}
+                placeholder="Pegá el link o código de tu amigo de WhatsApp acá..."
+                className="flex-1 bg-[#030a16] border border-blue-500/25 hover:border-blue-500/50 focus:border-brand-emerald focus:outline-none rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => handleConnectByCode()}
+                disabled={connectingByCode || !friendCodeInput.trim()}
+                className="py-2 px-4 bg-brand-emerald hover:bg-emerald-450 disabled:bg-slate-800 disabled:text-slate-600 text-brand-bg font-black text-[10.5px] uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 shrink-0"
+              >
+                {connectingByCode ? "Conectando..." : "Conectar Amigo"}
+              </button>
+            </div>
+            {connectStatus && (
+              <p className={`text-[10px] uppercase font-black tracking-wide mt-1 ${connectStatus.success ? "text-brand-emerald animate-pulse" : "text-rose-400"}`}>
+                {connectStatus.message}
+              </p>
+            )}
           </div>
         </div>
 
@@ -575,6 +641,33 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
                   >
                     <Copy className="w-3 h-3" /> {copiedLink ? "¡Copiado!" : "Copiar"}
                   </button>
+                </div>
+
+                {/* Pegar Código/Enlace del Amigo en empty state */}
+                <div className="w-full mt-2.5 border-t border-blue-500/10 pt-2.5 flex flex-col gap-1.5">
+                  <span className="text-[9px] font-black text-left text-blue-300 uppercase tracking-wide">🔌 ¿Ya tenés el código de tu amigo?</span>
+                  <div className="flex gap-1.5 w-full">
+                    <input
+                      type="text"
+                      value={friendCodeInput}
+                      onChange={(e) => setFriendCodeInput(e.target.value)}
+                      placeholder="Pegá código o enlace de WhatsApp..."
+                      className="flex-1 bg-[#02050c] border border-blue-500/20 hover:border-blue-500/40 rounded-lg px-2.5 py-1.5 text-[10px] text-white placeholder:text-slate-500 font-mono focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleConnectByCode()}
+                      disabled={connectingByCode || !friendCodeInput.trim()}
+                      className="py-1.5 px-3 bg-brand-emerald hover:bg-emerald-450 disabled:bg-slate-800 disabled:text-slate-600 text-brand-bg font-black text-[9px] uppercase tracking-wider rounded-lg transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                    >
+                      {connectingByCode ? "..." : "Conectar"}
+                    </button>
+                  </div>
+                  {connectStatus && (
+                    <p className={`text-[9px] uppercase font-bold text-center mt-0.5 ${connectStatus.success ? "text-brand-emerald" : "text-rose-400"}`}>
+                      {connectStatus.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

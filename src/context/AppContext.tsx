@@ -64,6 +64,7 @@ interface AppContextType {
   sendFriendRequest: (receiverId: string) => void;
   respondToFriendRequest: (requestId: string, status: 'accepted' | 'declined') => void;
   removeFriend: (friendId: string) => void;
+  connectUserByCode: (code: string) => Promise<{ success: boolean; displayName?: string; error?: string }>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -555,6 +556,111 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const connectUserByCode = async (code: string): Promise<{ success: boolean; displayName?: string; error?: string }> => {
+    if (!currentUser) {
+      return { success: false, error: "Iniciá sesión para conectarte con amigos, crack." };
+    }
+
+    let targetUid = code.trim();
+    if (targetUid.includes("invite=")) {
+      try {
+        const url = new URL(targetUid);
+        const inviteParam = url.searchParams.get("invite");
+        if (inviteParam) {
+          targetUid = inviteParam;
+        }
+      } catch (e) {
+        const match = targetUid.match(/[?&]invite=([^&]+)/);
+        if (match) {
+          targetUid = match[1];
+        }
+      }
+    }
+
+    targetUid = targetUid.trim();
+
+    if (!targetUid) {
+      return { success: false, error: "El código o link ingresado está vacío, ídolo." };
+    }
+
+    if (targetUid === currentUser.uid) {
+      return { success: false, error: "¡No podés conectarte con vos mismo, crack! Pasale este código a un amigo." };
+    }
+
+    const connectionExists = friendRequests.some(r => 
+      ((r.senderId === currentUser.uid && r.receiverId === targetUid) ||
+       (r.senderId === targetUid && r.receiverId === currentUser.uid)) &&
+       r.status === 'accepted'
+    );
+
+    if (connectionExists) {
+      const fUser = users.find(u => u.uid === targetUid);
+      return { 
+        success: true, 
+        displayName: fUser?.displayName || "Tu amigo", 
+        error: "Ya están conectados. ¡Buscalos en Mensajes o en el Círculo de Canjes!" 
+      };
+    }
+
+    let targetName = "Coleccionista";
+    if (isRealFirebase && db) {
+      try {
+        const uSnap = await getDoc(doc(db, 'users', targetUid));
+        if (uSnap.exists()) {
+          const uData = uSnap.data() as UserProfile;
+          targetName = uData.displayName;
+        } else {
+          return { success: false, error: "No se encontró ningún coleccionista para ese código en el servidor. Que tu amigo verifique si inició sesión." };
+        }
+      } catch (err) {
+        console.error("Error retrieving user profile:", err);
+        return { success: false, error: "Error de red al consultar el código. Comprobá tu conexión de internet." };
+      }
+    } else {
+      const localUser = users.find(u => u.uid === targetUid);
+      if (localUser) {
+        targetName = localUser.displayName;
+      } else {
+        targetName = "Amigo_" + targetUid.substring(0, 4).toUpperCase();
+        const mockProfile: UserProfile = {
+          uid: targetUid,
+          displayName: targetName,
+          email: `${targetName.toLowerCase()}@figus.com`,
+          createdAt: new Date().toISOString()
+        };
+        simAddUser(mockProfile);
+      }
+    }
+
+    const newRequest: FriendRequest = {
+      id: "req_manual_" + Math.random().toString(36).substr(2, 9),
+      senderId: targetUid,
+      senderName: targetName,
+      receiverId: currentUser.uid,
+      receiverName: currentUser.displayName,
+      status: 'accepted',
+      createdAt: new Date().toISOString()
+    };
+
+    if (isRealFirebase && db) {
+      try {
+        await setDoc(doc(db, 'friendRequests', newRequest.id), newRequest);
+        setConnectionNotification(`¡Te conectaste con @${targetName}! Ya pueden proponer canjes.`);
+        return { success: true, displayName: targetName };
+      } catch (err) {
+        console.error("Error connecting users:", err);
+        return { success: false, error: "Error al registrar la amistad en la nube." };
+      }
+    } else {
+      const existing = JSON.parse(localStorage.getItem('sticker_friend_requests') || '[]');
+      existing.push(newRequest);
+      localStorage.setItem('sticker_friend_requests', JSON.stringify(existing));
+      setFriendRequests(existing);
+      setConnectionNotification(`¡Te conectaste con @${targetName}! Ya pueden proponer canjes.`);
+      return { success: true, displayName: targetName };
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser,
@@ -578,7 +684,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setActiveTradeId,
       sendFriendRequest,
       respondToFriendRequest,
-      removeFriend
+      removeFriend,
+      connectUserByCode
     }}>
       {children}
     </AppContext.Provider>

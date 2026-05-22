@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import MyCatalog from './components/MyCatalog';
 import MyTrades from './components/MyTrades';
+import AIAssistant from './components/AIAssistant';
 
 function AppContent() {
   const { 
@@ -26,6 +27,7 @@ function AppContent() {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'album' | 'trades'>('album');
+  const [showAIChat, setShowAIChat] = useState<boolean>(false);
 
   const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -106,10 +108,23 @@ function AppContent() {
                   </span>
                 )}
               </button>
+
+
             </nav>
 
             {/* PROFILE DISPLAY AND SIGN IN/OUT */}
             <div className="flex items-center gap-3">
+              {/* IA Assistant Activation Button */}
+              <button
+                type="button"
+                onClick={() => setShowAIChat(true)}
+                className="relative bg-gradient-to-r from-[#0d2a1b] to-brand-panel hover:from-brand-emerald hover:to-emerald-400 text-brand-emerald hover:text-brand-bg px-3.5 py-2.5 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all border border-brand-emerald/30 shadow-[0_0_15px_rgba(16,185,129,0.12)] group shrink-0"
+                title="Consultar Sabelotodo IA"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-brand-emerald group-hover:text-brand-bg shrink-0 animate-pulse" />
+                <span>⚽ Sabelotodo IA</span>
+              </button>
+
               <div className="hidden sm:flex flex-col items-end text-right">
                 <span className="text-xs font-bold text-slate-200 leading-none">{currentUser?.displayName || "Sin Usuario"}</span>
                 <span className="text-[10px] text-slate-400 font-mono mt-1">{currentUser?.email}</span>
@@ -139,6 +154,8 @@ function AppContent() {
             {activeTab === 'trades' && (
               <MyTrades />
             )}
+
+
 
           </div>
 
@@ -297,6 +314,8 @@ function AppContent() {
             </span>
           )}
         </button>
+
+
       </nav>
 
       {/* Connection notification toast for instant invite connections */}
@@ -325,6 +344,50 @@ function AppContent() {
               <X className="w-4 h-4" />
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Sliding AI Assistant Drawer */}
+      <AnimatePresence>
+        {showAIChat && (
+          <>
+            {/* Dark Backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAIChat(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 cursor-pointer"
+            />
+
+            {/* Slide-out Drawer Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 220 }}
+              className="fixed top-0 right-0 bottom-0 w-full sm:max-w-md bg-brand-bg border-l border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.85)] z-50 flex flex-col p-4"
+            >
+              <div className="flex items-center justify-between mb-4 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-brand-gold animate-pulse" />
+                  <span className="text-xs uppercase font-black font-mono tracking-widest text-slate-350">FiguSabelotodo IA</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAIChat(false)}
+                  className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer flex items-center justify-center border border-white/5"
+                  title="Cerrar Asistente"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-hidden" id="drawer-assistant-inner">
+                <AIAssistant />
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
