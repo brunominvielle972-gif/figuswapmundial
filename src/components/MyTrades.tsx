@@ -27,10 +27,14 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
     users,
     stickers,
     proposeTrade,
-    connectUserByCode
+    connectUserByCode,
+    loginWithGoogle,
+    createNewProfile,
+    isFirebaseActive
   } = useApp();
 
   const [messageText, setMessageText] = useState<string>("");
+  const [localName, setLocalName] = useState("");
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -124,13 +128,56 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
   }, [currentTradeMessages, activeTradeId]);
 
   if (!currentUser) {
+    const handleManualSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!localName.trim()) return;
+      createNewProfile(localName.trim(), `${localName.trim().toLowerCase().replace(/\s+/g, '')}@figus.com`);
+    };
+
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center bg-brand-panel rounded-2xl border border-white/10 shadow-2xl animate-fade-in" id="trades-logged-out">
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-brand-panel rounded-3xl border border-white/10 shadow-2xl animate-fade-in" id="trades-logged-out">
         <Handshake className="w-12 h-12 text-brand-emerald mb-3 animate-pulse" />
-        <h3 className="text-lg font-black text-white uppercase tracking-wider">Iniciá sesión para ver tus intercambios</h3>
-        <p className="text-xs text-slate-400 mt-1 max-w-sm">
-          Registrate o seleccioná un usuario de prueba arriba para ver tus propuestas de canje.
+        <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Iniciá sesión para ver tus intercambios</h3>
+        <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-6">
+          Ingresá con tu cuenta para proponer canjes seguros y conversar con otros coleccionistas en tiempo real.
         </p>
+
+        <div className="w-full max-w-sm bg-[#0a180f] p-6 rounded-2xl border border-brand-emerald/20 shadow-inner">
+          {isFirebaseActive ? (
+            <button
+              onClick={loginWithGoogle}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-650 to-amber-500 hover:from-red-550 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
+            >
+              ⚽ Ingresar con Google
+            </button>
+          ) : (
+            <div className="text-[11px] text-amber-500 mb-3 font-semibold font-mono">Modo Simulador Desconectado</div>
+          )}
+
+          <div className="flex items-center my-4">
+            <div className="flex-1 border-t border-white/5"></div>
+            <span className="px-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider">O con tu Nickname</span>
+            <div className="flex-1 border-t border-white/5"></div>
+          </div>
+
+          <form onSubmit={handleManualSubmit} className="space-y-3">
+            <input
+              type="text"
+              required
+              maxLength={25}
+              placeholder="Escribí tu nombre (Ej: Bruno, Santi)"
+              value={localName}
+              onChange={(e) => setLocalName(e.target.value)}
+              className="w-full bg-[#040c06] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:outline-none focus:border-brand-emerald font-bold font-sans placeholder:text-slate-600"
+            />
+            <button
+              type="submit"
+              className="w-full py-2.5 px-4 bg-[#112d1b] hover:bg-[#1a4427] text-brand-emerald font-black text-[11px] uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-brand-emerald/30 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+            >
+              Acceso Rápido Fútbol 🏆
+            </button>
+          </form>
+        </div>
       </div>
     );
   }

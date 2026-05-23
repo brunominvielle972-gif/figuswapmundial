@@ -70,9 +70,7 @@ service cloud.firestore {
 
     // --- TRADE AGREEMENTS SECURING ---
     match /trades/{tradeId} {
-      // Secure List & Get queries: Only the proposer or receiver can ever see this private trade
-      allow read: if isSignedIn() 
-        && (resource.data.proposerId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow read, list: if isSignedIn(); // Standard collection list reads are permitted for mutual matchmaking
 
       allow create: if isSignedIn() 
         && incoming().proposerId == request.auth.uid 
@@ -84,10 +82,12 @@ service cloud.firestore {
       allow update: if isSignedIn() 
         && (existing().proposerId == request.auth.uid || existing().receiverId == request.auth.uid)
         && isValidTrade(incoming())
+        && incoming().proposerId == existing().proposerId
+        && incoming().receiverId == existing().receiverId
         && (
           // Action 1: Receiver accepts or rejects
           (request.auth.uid == existing().receiverId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
-          // Action 2: Either party completes or cancels the trade (Terminal lock transition handled inside helper is needed or in client)
+          // Action 2: Either party completes or cancels the trade (Terminal lock transition)
           (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
         )
         && incoming().updatedAt == request.time;
@@ -96,8 +96,10 @@ service cloud.firestore {
     function isValidTrade(data) {
       return data.keys().hasAll(['id', 'proposerId', 'proposerName', 'receiverId', 'receiverName', 'offeredStickers', 'requestedStickers', 'status', 'createdAt', 'updatedAt'])
         && data.keys().size() == 10
-        && data.proposerId is string
-        && data.receiverId is string
+        && data.proposerId is string && data.proposerId.size() <= 128
+        && data.receiverId is string && data.receiverId.size() <= 128
+        && data.proposerName is string && data.proposerName.size() <= 100
+        && data.receiverName is string && data.receiverName.size() <= 100
         && (data.status == 'pending' || data.status == 'accepted' || data.status == 'rejected' || data.status == 'completed' || data.status == 'cancelled')
         && data.offeredStickers is list
         && data.requestedStickers is list;
@@ -105,7 +107,6 @@ service cloud.firestore {
 
     // --- TRADE MESSAGES (SUBCOLLECTION) SECURING ---
     match /trades/{tradeId}/messages/{messageId} {
-      // Subcollection Relational Gate (Master Gate rule checks against parent's participants)
       allow read, list, create: if isSignedIn() 
         && (
           get(/databases/$(database)/documents/trades/$(tradeId)).data.proposerId == request.auth.uid 
@@ -113,5 +114,33 @@ service cloud.firestore {
         );
     }
 
+    // --- FRIEND REQUESTS SECURING ---
+    match /friendRequests/{requestId} {
+      allow read, list: if isSignedIn();
+      
+      allow create: if isSignedIn() 
+        && (incoming().senderId == request.auth.uid || incoming().receiverId == request.auth.uid) 
+        && isValidFriendRequest(incoming());
+        
+      allow update: if isSignedIn() 
+        && (existing().receiverId == request.auth.uid || existing().senderId == request.auth.uid) 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status']) 
+        && (incoming().status == 'accepted' || incoming().status == 'rejected');
+        
+      allow delete: if isSignedIn() 
+        && (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid);
+    }
+
+    function isValidFriendRequest(data) {
+      return data.keys().hasAll(['id', 'senderId', 'senderName', 'receiverId', 'receiverName', 'status', 'createdAt'])
+        && data.keys().size() == 7
+        && data.senderId is string && data.senderId.size() <= 128
+        && data.receiverId is string && data.receiverId.size() <= 128
+        && data.senderName is string && data.senderName.size() <= 100
+        && data.receiverName is string && data.receiverName.size() <= 100
+        && (data.status == 'pending' || data.status == 'accepted' || data.status == 'rejected')
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
   }
-} rules_version = '2';
+}

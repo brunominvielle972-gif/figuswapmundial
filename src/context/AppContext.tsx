@@ -39,7 +39,7 @@ import {
   deleteDoc,
   getDoc
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -65,6 +65,8 @@ interface AppContextType {
   respondToFriendRequest: (requestId: string, status: 'accepted' | 'declined') => void;
   removeFriend: (friendId: string) => void;
   connectUserByCode: (code: string) => Promise<{ success: boolean; displayName?: string; error?: string }>;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -372,7 +374,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('my_saved_sim_user_id', userId);
   };
 
-  // Register a custom test user profile on-the-fly
+  // Register a custom test user profile or fast profile
   const createNewProfile = (name: string, email: string) => {
     const newUser: UserProfile = {
       uid: "user_" + Math.random().toString(36).substr(2, 9),
@@ -381,12 +383,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString()
     };
     if (isRealFirebase && db) {
-      // Create user if live
-      setDoc(doc(db, 'users', newUser.uid), newUser).catch((err) => handleFirestoreError(err, OperationType.WRITE, `users/${newUser.uid}`));
+      // Create user if live and save locally to state
+      setDoc(doc(db, 'users', newUser.uid), newUser)
+        .then(() => {
+          localStorage.setItem('my_saved_sim_user_id', newUser.uid);
+          setSelectedSimUserId(newUser.uid);
+          setCurrentUser(newUser);
+        })
+        .catch((err) => handleFirestoreError(err, OperationType.WRITE, `users/${newUser.uid}`));
     } else {
       simAddUser(newUser);
       localStorage.setItem('my_saved_sim_user_id', newUser.uid);
       setSelectedSimUserId(newUser.uid);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    if (isRealFirebase && auth) {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err: any) {
+        console.error("Google Authentication failed:", err);
+        handleFirestoreError(err, OperationType.WRITE, "auth/google-login");
+      }
+    }
+  };
+
+  const logout = async () => {
+    if (isRealFirebase && auth) {
+      try {
+        await signOut(auth);
+      } catch (err: any) {
+        console.error("Logout failed:", err);
+      }
+    } else {
+      setSelectedSimUserId("");
+      setCurrentUser(null);
+      localStorage.removeItem('my_saved_sim_user_id');
     }
   };
 
@@ -685,7 +719,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sendFriendRequest,
       respondToFriendRequest,
       removeFriend,
-      connectUserByCode
+      connectUserByCode,
+      loginWithGoogle,
+      logout
     }}>
       {children}
     </AppContext.Provider>
