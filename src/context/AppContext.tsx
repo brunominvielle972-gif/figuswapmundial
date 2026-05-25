@@ -39,7 +39,7 @@ import {
   deleteDoc,
   getDoc
 } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut } from 'firebase/auth';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -230,6 +230,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // 1. Establish User Auth Strategy
   useEffect(() => {
     if (isRealFirebase && auth) {
+      // Handle Google Redirect login results on mount (robust for mobile phone browsers/webviews)
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            console.log("Logged in via Google redirect:", result.user);
+          }
+        })
+        .catch((err) => {
+          console.error("Google Auth Redirect Result error:", err);
+        });
+
       const unsubscribe = onAuthStateChanged(auth, (user: any) => {
         if (user) {
           const profile: UserProfile = {
@@ -246,7 +257,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
           });
         } else {
-          setCurrentUser(null);
+          // If no Auth user, check if we have a locally saved nickname user!
+          if (selectedSimUserId && selectedSimUserId.startsWith('user_')) {
+            const matched = users.find(u => u.uid === selectedSimUserId);
+            if (matched) {
+              setCurrentUser(matched);
+            } else {
+              // Fetch from Firestore directly on startup
+              getDoc(doc(db, 'users', selectedSimUserId)).then(snap => {
+                if (snap.exists()) {
+                  setCurrentUser(snap.data() as UserProfile);
+                } else {
+                  setCurrentUser(null);
+                }
+              }).catch(() => setCurrentUser(null));
+            }
+          } else {
+            setCurrentUser(null);
+          }
         }
       });
       return () => unsubscribe();
@@ -259,7 +287,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setCurrentUser(matched);
       }
     }
-  }, [selectedSimUserId]);
+  }, [selectedSimUserId, users]);
 
   // 2. Fetch Stickers, Trades, Users, and Friend Requests in Realtime
   useEffect(() => {
@@ -401,11 +429,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = async () => {
     if (isRealFirebase && auth) {
       const provider = new GoogleAuthProvider();
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (err: any) {
-        console.error("Google Authentication failed:", err);
-        handleFirestoreError(err, OperationType.WRITE, "auth/google-login");
+      
+      // Check if user is on a mobile device or inside a webview to choose the best sign-in flow
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        console.log("Mobile or webview detected. Using signInWithRedirect for Google Auth...");
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (err: any) {
+          console.error("signInWithRedirect failed:", err);
+          handleFirestoreError(err, OperationType.WRITE, "auth/google-redirect");
+        }
+      } else {
+        console.log("Desktop device detected. Attempting signInWithPopup...");
+        try {
+          await signInWithPopup(auth, provider);
+        } catch (err: any) {
+          console.warn("signInWithPopup failed (possibly blocked), trying redirect:", err);
+          try {
+            await signInWithRedirect(auth, provider);
+          } catch (rErr: any) {
+            console.error("signInWithRedirect fallback failed:", rErr);
+            handleFirestoreError(rErr, OperationType.WRITE, "auth/google-login");
+          }
+        }
       }
     }
   };
@@ -414,6 +462,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (isRealFirebase && auth) {
       try {
         await signOut(auth);
+        // Clear local storage reference to simulator user if any
+        setSelectedSimUserId("");
+        localStorage.removeItem('my_saved_sim_user_id');
       } catch (err: any) {
         console.error("Logout failed:", err);
       }

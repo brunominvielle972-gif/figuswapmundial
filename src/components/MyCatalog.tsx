@@ -38,26 +38,26 @@ export default function MyCatalog() {
     return (
       <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-brand-panel rounded-3xl border border-white/10 shadow-2xl animate-fade-in" id="catalog-logged-out">
         <ShieldCheck className="w-12 h-12 text-brand-emerald mb-4 animate-[pulse_2s_infinite]" />
-        <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Iniciá sesión para ver tus figus</h3>
+        <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Log in to view your stickers</h3>
         <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-6">
-          Ingresá con tu cuenta para cargar tu tablilla de control de figuritas repetidas e intercambiar en tiempo real con amigos.
+          Log in with your account to load your duplicate sticker checklist and exchange in real-time with friends.
         </p>
 
         <div className="w-full max-w-sm bg-[#0a180f] p-6 rounded-2xl border border-brand-emerald/20 shadow-inner">
           {isFirebaseActive ? (
             <button
               onClick={loginWithGoogle}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-650 to-amber-500 hover:from-red-550 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
             >
-              ⚽ Ingresar con Google
+              ⚽ Sign in with Google
             </button>
           ) : (
-            <div className="text-[11px] text-amber-500 mb-3 font-semibold font-mono">Modo Simulador Desconectado</div>
+            <div className="text-[11px] text-amber-500 mb-3 font-semibold font-mono">Simulator Mode Offline</div>
           )}
 
           <div className="flex items-center my-4">
             <div className="flex-1 border-t border-white/5"></div>
-            <span className="px-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider">O con tu Nickname</span>
+            <span className="px-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider">Or with your Nickname</span>
             <div className="flex-1 border-t border-white/5"></div>
           </div>
 
@@ -66,7 +66,7 @@ export default function MyCatalog() {
               type="text"
               required
               maxLength={25}
-              placeholder="Escribí tu nombre (Ej: Santi, Sofi)"
+              placeholder="Enter your name (e.g. Santi, Sofi)"
               value={localName}
               onChange={(e) => setLocalName(e.target.value)}
               className="w-full bg-[#040c06] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:outline-none focus:border-brand-emerald font-bold font-sans placeholder:text-slate-600"
@@ -75,7 +75,7 @@ export default function MyCatalog() {
               type="submit"
               className="w-full py-2.5 px-4 bg-[#112d1b] hover:bg-[#1a4427] text-brand-emerald font-black text-[11px] uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-brand-emerald/30 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
             >
-              Acceso Rápido Fútbol 🏆
+              Quick Soccer Access 🏆
             </button>
           </form>
         </div>
@@ -97,12 +97,12 @@ export default function MyCatalog() {
     if (sanitized) {
       const num = parseInt(sanitized, 10);
       if (num < 1 || num > 20) {
-        setValidationError(`Número inválido: ${sanitized}. Los números en la tablilla oficial van del 1 al 20.`);
+        setValidationError(`Invalid number: ${sanitized}. Numbers on the official board must be between 1 and 20.`);
       } else {
         setValidationError(null);
       }
     } else {
-      setValidationError("Por favor ingresá un número de figurita.");
+      setValidationError("Please enter a sticker number.");
     }
   };
 
@@ -110,13 +110,13 @@ export default function MyCatalog() {
     e.preventDefault();
 
     if (!codeNum.trim()) {
-      setValidationError("Por favor ingresá un número de figurita.");
+      setValidationError("Please enter a sticker number.");
       return;
     }
 
     const numInt = parseInt(codeNum.trim(), 10);
     if (isNaN(numInt) || numInt < 1 || numInt > 20) {
-      setValidationError(`Error: El número de la figurita (${codeNum}) es inválido. Debe estar estrictamente entre 1 y 20.`);
+      setValidationError(`Error: Sticker number (${codeNum}) is invalid. It must be strictly between 1 and 20.`);
       return;
     }
 
@@ -179,21 +179,21 @@ export default function MyCatalog() {
       <div className="p-6 bg-gradient-to-r from-[#0d1f13] to-[#040c06] rounded-2xl border border-brand-emerald/20 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="text-left">
           <span className="text-[10px] uppercase tracking-widest font-black text-brand-emerald flex items-center gap-1">
-            <ClipboardCheck className="w-3.5 h-3.5" /> Tablilla Oficial Interactiva
+            <ClipboardCheck className="w-3.5 h-3.5" /> Official Interactive Checklist
           </span>
-          <h2 className="text-lg font-black tracking-tight text-white uppercase mt-1">Mi Tablilla de Control de Figuritas</h2>
+          <h2 className="text-lg font-black tracking-tight text-white uppercase mt-1">My Collector's Sticker Checklist</h2>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Basado en la tablilla física oficial: marcá en verde las que **tenés repetidas** para ofrecer y en amarillo las que **necesitás conseguir**. 
-            ¡Hacé clic sobre cualquier número en la grilla para cargarlo al instante sin escribir!
+            Based on the official physical checklist: mark in green the ones you **have duplicate** to trade, and in yellow the ones you **need to get**. 
+            Click on any number in the grid to load it instantly without typing!
           </p>
         </div>
         <div className="bg-brand-emerald/15 border border-brand-emerald/30 rounded-xl px-5 py-3 text-center shrink-0 flex items-center gap-4">
           <div className="text-left border-r border-white/10 pr-4">
-            <span className="text-[9px] uppercase font-bold text-brand-emerald block">Tengo Repetidas</span>
+            <span className="text-[9px] uppercase font-bold text-brand-emerald block">Duplicates (To Trade)</span>
             <span className="text-xl font-mono font-black text-white">{myStickers.filter(s => s.type === 'repetida').length}</span>
           </div>
           <div className="text-left">
-            <span className="text-[9px] uppercase font-bold text-brand-gold block">Me Faltan</span>
+            <span className="text-[9px] uppercase font-bold text-brand-gold block">Missing (Needed)</span>
             <span className="text-xl font-mono font-black text-white">{myStickers.filter(s => s.type === 'faltante').length}</span>
           </div>
         </div>
@@ -204,24 +204,24 @@ export default function MyCatalog() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-3 mb-5">
           <div className="text-left">
             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-brand-emerald animate-pulse" /> Tablilla Oficial de Control de Selecciones
+              <Sparkles className="w-4 h-4 text-brand-emerald animate-pulse" /> Official National Team Checklist
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Mapeo oficial de cromos correlativos del 1 al 20 por selección nacional.</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Official mapping of stickers 1 through 20 of each national team.</p>
           </div>
           
           {/* Legend indicators */}
           <div className="flex flex-wrap items-center gap-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
             <div className="flex items-center gap-1">
               <span className="w-3 h-3 bg-[#0d1f13] border border-white/15 rounded text-center block" />
-              <span>No cargada</span>
+              <span>Not registered yet</span>
             </div>
             <div className="flex items-center gap-1 text-brand-emerald">
               <span className="w-3 h-3 bg-brand-emerald rounded block shadow" />
-              <span>Ofrecida (Repetida)</span>
+              <span>Offered (Duplicate)</span>
             </div>
             <div className="flex items-center gap-1 text-brand-gold">
               <span className="w-3 h-3 bg-brand-gold rounded block shadow" />
-              <span>Buscada (Faltante)</span>
+              <span>Wanted (Missing)</span>
             </div>
           </div>
         </div>
@@ -248,7 +248,7 @@ export default function MyCatalog() {
                       {name}
                     </span>
                     <span className="text-[9px] font-mono font-bold text-brand-emerald/80 mt-1 block">
-                      Prefijo: {code}
+                      Prefix: {code}
                     </span>
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function MyCatalog() {
                           });
                         }}
                         className={`w-9 py-1 rounded text-[10px] font-mono border text-center transition-all cursor-pointer ${bgStyle}`}
-                        title={`Editar ${stickerCode}`}
+                        title={`Edit ${stickerCode}`}
                       >
                         {numStr}
                       </button>
@@ -309,7 +309,7 @@ export default function MyCatalog() {
             >
               <div className="p-4 bg-gradient-to-r from-[#0d1f13] to-[#040c06] border-b border-white/15 flex justify-between items-center">
                 <div className="text-left">
-                  <span className="text-[10px] text-brand-emerald uppercase font-black tracking-widest block">Asignar Cromo</span>
+                  <span className="text-[10px] text-brand-emerald uppercase font-black tracking-widest block">Assign Sticker</span>
                   <h4 className="text-sm font-black text-white font-mono uppercase tracking-tight">{activeQuickEdit.code}</h4>
                 </div>
                 <button
@@ -337,10 +337,10 @@ export default function MyCatalog() {
                   
                   {getMyStickerByCode(activeQuickEdit.code) ? (
                     <span className="mt-2 text-[9px] font-black uppercase px-2 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/30">
-                      Estado: {getMyStickerByCode(activeQuickEdit.code)?.type === 'repetida' ? 'Ofrecida' : 'Buscada'}
+                      Status: {getMyStickerByCode(activeQuickEdit.code)?.type === 'repetida' ? 'Duplicate' : 'Missing'}
                     </span>
                   ) : (
-                    <span className="mt-2 text-[9px] text-slate-500 font-medium">No cargada todavía</span>
+                    <span className="mt-2 text-[9px] text-slate-500 font-medium">Not registered yet</span>
                   )}
                 </div>
 
@@ -350,20 +350,20 @@ export default function MyCatalog() {
                     onClick={() => handleQuickAssign('repetida')}
                     className="py-2.5 px-1 bg-brand-emerald text-brand-bg font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
                   >
-                    Repetida (Tengo)
+                    Duplicate (Have)
                   </button>
                   <button
                     onClick={() => handleQuickAssign('faltante')}
                     className="py-2.5 px-1 bg-brand-gold text-brand-bg font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
                   >
-                    Faltante (Busco)
+                    Missing (Want)
                   </button>
                   <button
                     onClick={() => handleQuickAssign('remove')}
                     disabled={!getMyStickerByCode(activeQuickEdit.code)}
                     className="py-2.5 px-1 bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-stone-300 font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
                   >
-                    Quitar / Limpiar
+                    Remove / Clear
                   </button>
                 </div>
               </div>
@@ -379,13 +379,13 @@ export default function MyCatalog() {
         <div className="lg:col-span-2 bg-brand-panel/85 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-2xl relative" id="sticker-form-container">
           <h2 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 mb-4 border-b border-white/5 pb-2 text-left">
             <Plus className="w-5 h-5 text-brand-emerald" />
-            Cargar Figurita Manual
+            Add Sticker Manually
           </h2>
           <form onSubmit={handleManualSubmit} className="space-y-4">
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] text-left uppercase tracking-widest font-black text-slate-400 mb-1">Selección Nacional</label>
+                <label className="block text-[10px] text-left uppercase tracking-widest font-black text-slate-400 mb-1">National Team</label>
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
@@ -399,7 +399,7 @@ export default function MyCatalog() {
 
               <div className="grid grid-cols-3 gap-2 text-left">
                 <div className="col-span-1">
-                  <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Número</label>
+                  <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Number</label>
                   <input
                     type="text"
                     required
@@ -410,21 +410,21 @@ export default function MyCatalog() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Categoría</label>
+                  <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Category</label>
                   <div className="grid grid-cols-2 bg-[#050a06] p-1 rounded-xl border border-white/5">
                     <button
                       type="button"
                       onClick={() => setStickerType('repetida')}
                       className={`py-1.5 text-[11px] font-black rounded-lg text-center transition-all border ${stickerType === 'repetida' ? 'bg-[#0d1f13] text-brand-emerald border-brand-emerald/35 shadow-xs font-black' : 'text-slate-400 hover:text-white border-transparent cursor-pointer'}`}
                     >
-                      Repetida
+                      Duplicate
                     </button>
                     <button
                       type="button"
                       onClick={() => setStickerType('faltante')}
                       className={`py-1.5 text-[11px] font-black rounded-lg text-center transition-all border ${stickerType === 'faltante' ? 'bg-[#241305] text-brand-gold border-brand-gold/35 shadow-xs font-black' : 'text-slate-400 hover:text-white border-transparent cursor-pointer'}`}
                     >
-                      Faltante
+                      Missing
                     </button>
                   </div>
                 </div>
@@ -439,11 +439,11 @@ export default function MyCatalog() {
             )}
 
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-between bg-[#0d1f13] border border-white/10 p-3.5 rounded-xl">
-              <span className="text-xs font-black text-slate-300">Tipo de figurita: {stickerType === 'repetida' ? 'Repetida (Ofrecida)' : 'Faltante (Buscada)'}</span>
+              <span className="text-xs font-black text-slate-300">Sticker status: {stickerType === 'repetida' ? 'Duplicate (To Offer)' : 'Missing (To Find)'}</span>
 
               {stickerType === 'repetida' ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Cantidad:</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Quantity:</span>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -463,7 +463,7 @@ export default function MyCatalog() {
                   </div>
                 </div>
               ) : (
-                <span className="text-[10px] text-slate-500 font-medium italic">Se carga como búsqueda para trueque</span>
+                <span className="text-[10px] text-slate-500 font-medium italic">Added to missing list for swaps</span>
               )}
             </div>
 
@@ -471,7 +471,7 @@ export default function MyCatalog() {
               type="submit"
               className="w-full mt-2 py-3 bg-gradient-to-r from-brand-emerald to-emerald-600 text-[#050a06] rounded-xl text-xs font-black uppercase tracking-wider hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] cursor-pointer"
             >
-              Cargar y Registrar
+              Add and Save
             </button>
           </form>
         </div>
@@ -479,16 +479,16 @@ export default function MyCatalog() {
         {/* INFO BOX */}
         <div className="bg-[#0c130d] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col justify-between h-full min-h-[200px]" id="quick-action-info">
           <div className="text-left space-y-3">
-            <h3 className="text-xs font-black text-brand-emerald uppercase tracking-wider">¿Por qué usar la Tablilla?</h3>
+            <h3 className="text-xs font-black text-brand-emerald uppercase tracking-wider">Why use this checklist?</h3>
             <p className="text-[11px] text-slate-300 leading-relaxed font-semibold">
-              Los coleccionistas organizan sus canjes basándose estrictamente en el número correlativo que les falta para completar el álbum.
+              Collectors coordinate their swaps strictly based on the correlation numbers they are missing to complete their album.
             </p>
             <p className="text-[10.5px] text-slate-400 leading-relaxed">
-              En vez de escribir nombres de jugadores o textos largos, la tablilla oficial compacta la búsqueda en su denominación estricta y código de selección (Ej: **ARG 10** o **BRA 9** en vez de la descripción completa). ¡La forma más oficial, ordenada y rápida de coleccionar!
+              Instead of typing long names or text, this checklist organizes everything using official clean short codes (e.g. **ARG 10** or **BRA 9**). It is the fastest, most professional, and structured way to trade!
             </p>
           </div>
           <div className="text-[10px] text-left uppercase text-slate-500 font-bold border-t border-white/5 pt-3.5 mt-4">
-            <span>🏆 Control de Figuritas del Mundial (1 al 20)</span>
+            <span>🏆 World Cup Sticker Control (1 to 20)</span>
           </div>
         </div>
       </div>
@@ -500,10 +500,10 @@ export default function MyCatalog() {
         <div className="bg-brand-panel/85 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-2xl" id="my-repeated-list">
           <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-5">
             <div className="text-left">
-              <h3 className="text-xs font-black text-white uppercase tracking-widest">{currentUser.displayName} Ofrece ({myStickers.filter(s => s.type === 'repetida').length})</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">Tus figuritas repetidas disponibles para trueque.</p>
+              <h3 className="text-xs font-black text-white uppercase tracking-widest">{currentUser.displayName} Offers ({myStickers.filter(s => s.type === 'repetida').length})</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Your duplicate stickers available for trading.</p>
             </div>
-            <span className="text-[10px] font-mono bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 px-2.5 py-1 rounded font-black uppercase tracking-wider">Tengo</span>
+            <span className="text-[10px] font-mono bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 px-2.5 py-1 rounded font-black uppercase tracking-wider">Have</span>
           </div>
 
           <AnimatePresence mode="popLayout">
@@ -514,8 +514,8 @@ export default function MyCatalog() {
                 className="text-center py-12"
               >
                 <HelpCircle className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-400">Sin figuritas repetidas cargadas.</p>
-                <p className="text-[10px] text-slate-500 mt-1 max-w-xs mx-auto">Seleccioná números en la Tablilla arriba para declararlas en oferta.</p>
+                <p className="text-xs text-slate-400">No duplicate stickers added yet.</p>
+                <p className="text-[10px] text-slate-500 mt-1 max-w-xs mx-auto">Click on grid numbers in the checklist above to mark them as duplicate.</p>
               </motion.div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-1 customize-scrollbar">
@@ -546,7 +546,7 @@ export default function MyCatalog() {
                           </span>
                           {s.quantity > 1 && (
                             <span className="text-[9px] font-mono font-extrabold bg-brand-emerald/10 text-brand-emerald mt-1 px-1.5 rounded">
-                              Disponibles: {s.quantity}
+                              Available: {s.quantity}
                             </span>
                           )}
                         </div>
@@ -559,7 +559,7 @@ export default function MyCatalog() {
                             {s.country}
                           </span>
                           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
-                            Cromo Oficial
+                            Official Sticker
                           </span>
                         </div>
 
@@ -568,9 +568,9 @@ export default function MyCatalog() {
                           type="button"
                           onClick={() => removeSticker(s.id)}
                           className="p-1 px-2.5 bg-rose-950/20 text-[#faa] border border-rose-900/40 hover:bg-rose-900/50 hover:text-white rounded-lg transition-all cursor-pointer shadow text-[9px] font-black uppercase"
-                          title="Eliminar de inventario"
+                          title="Remove from inventory"
                         >
-                          Quitar
+                          Remove
                         </button>
                       </div>
                     </motion.div>
@@ -585,10 +585,10 @@ export default function MyCatalog() {
         <div className="bg-brand-panel/85 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-2xl" id="my-needed-list">
           <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-5">
             <div className="text-left">
-              <h3 className="text-xs font-black text-white uppercase tracking-widest">{currentUser.displayName} Busca ({myStickers.filter(s => s.type === 'faltante').length})</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">Tus figuritas buscadas registradas para recolectar.</p>
+              <h3 className="text-xs font-black text-white uppercase tracking-widest">{currentUser.displayName} Wants ({myStickers.filter(s => s.type === 'faltante').length})</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Your wanted stickers registered to find.</p>
             </div>
-            <span className="text-[10px] font-mono bg-brand-gold/15 text-brand-gold border border-brand-gold/30 px-2.5 py-1 rounded font-black uppercase tracking-wider">Busco</span>
+            <span className="text-[10px] font-mono bg-brand-gold/15 text-brand-gold border border-brand-gold/30 px-2.5 py-1 rounded font-black uppercase tracking-wider">Want</span>
           </div>
 
           <AnimatePresence mode="popLayout">
@@ -599,8 +599,8 @@ export default function MyCatalog() {
                 className="text-center py-12"
               >
                 <HelpCircle className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-400">Sin figuritas faltantes cargadas.</p>
-                <p className="text-[10px] text-slate-500 mt-1 max-w-xs mx-auto">Seleccioná números en la Tablilla arriba para declararlas como faltantes.</p>
+                <p className="text-xs text-slate-400">No missing stickers added yet.</p>
+                <p className="text-[10px] text-slate-500 mt-1 max-w-xs mx-auto">Click on grid numbers in the checklist above to mark them as missing.</p>
               </motion.div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-1 customize-scrollbar flex-1">
@@ -639,7 +639,7 @@ export default function MyCatalog() {
                             {s.country}
                           </span>
                           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
-                            Cromo Oficial
+                            Official Sticker
                           </span>
                         </div>
 
@@ -648,9 +648,9 @@ export default function MyCatalog() {
                           type="button"
                           onClick={() => removeSticker(s.id)}
                           className="p-1 px-2.5 bg-rose-950/20 text-[#faa] border border-rose-900/40 hover:bg-rose-900/50 hover:text-white rounded-lg transition-all cursor-pointer shadow text-[9px] font-black uppercase"
-                          title="Eliminar de inventario"
+                          title="Remove from inventory"
                         >
-                          Quitar
+                          Remove
                         </button>
                       </div>
                     </motion.div>
