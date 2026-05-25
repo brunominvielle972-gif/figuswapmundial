@@ -37,7 +37,6 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
     trades
   } = useApp();
 
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCountry, setSelectedCountry] = useState<string>("All");
   const [showStats, setShowStats] = useState<boolean>(false);
 
@@ -51,9 +50,9 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center bg-brand-panel rounded-2xl border border-white/10 shadow-2xl animate-fade-in" id="hub-logged-out">
         <AlertCircle className="w-12 h-12 text-brand-gold mb-3 animate-pulse" />
-        <h3 className="text-lg font-black text-white uppercase tracking-wider">Iniciá sesión para explorar la comunidad</h3>
+        <h3 className="text-lg font-black text-white uppercase tracking-wider">Log in to explore the community</h3>
         <p className="text-xs text-slate-400 mt-1 max-w-sm">
-          Ingresá o cambia de usuario arriba para ver figuritas, enviar solicitudes de amistad y negociar canjes.
+          Sign in or switch users above to view stickers, send friend requests, and negotiate trades.
         </p>
       </div>
     );
@@ -75,13 +74,10 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
   const myNeeded = myStickers.filter(s => s.type === 'faltante');
   const myRepeated = myStickers.filter(s => s.type === 'repetida');
 
-  // Filter listings by text query & country (avoiding player names, emphasizing country codes)
+  // Filter listings by country (avoiding complex code search per user feedback)
   const filteredOffers = othersOffers.filter(s => {
-    const matchesSearch = 
-      s.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      s.country.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCountry = selectedCountry === "All" || s.country === selectedCountry;
-    return matchesSearch && matchesCountry;
+    return matchesCountry;
   });
 
   // Get unique list of countries from other users' offers for filter
@@ -116,11 +112,11 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
   const handleSendProposal = () => {
     if (!proposingToUser) return;
     if (selectedOffered.length === 0) {
-      alert("Por favor selecciona al menos una de tus figuritas para ofrecer en intercambio.");
+      alert("Please select at least one of your stickers to offer in the transition.");
       return;
     }
     if (selectedRequested.length === 0) {
-      alert("Por favor selecciona al menos una figurita del otro usuario.");
+      alert("Please select at least one sticker of the other user.");
       return;
     }
 
@@ -131,7 +127,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
       selectedRequested
     );
 
-    setSuccessInfo(`¡Propuesta de trueque enviada con éxito a ${proposingToUser.name}!`);
+    setSuccessInfo(`Trade proposal sent successfully to @${proposingToUser.name}!`);
     setTimeout(() => {
       setProposingToUser(null);
       setSuccessInfo(null);
@@ -160,23 +156,23 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
             sendFriendRequest(ownerId);
           }}
           className="text-[9px] font-black uppercase text-brand-emerald bg-brand-emerald/15 hover:bg-brand-emerald hover:text-brand-bg px-2 py-0.5 rounded border border-brand-emerald/30 transition-all flex items-center gap-0.5 shrink-0"
-          title={`Enviar solicitud de amistad a @${ownerName}`}
+          title={`Send friend request to @${ownerName}`}
         >
-          <UserPlus className="w-2.5 h-2.5" /> + Amigo
+          <UserPlus className="w-2.5 h-2.5" /> + Friend
         </button>
       );
     }
     if (fState.status === 'accepted') {
       return (
         <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950/25 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
-          🤝 Amigo
+          🤝 Friend
         </span>
       );
     }
     if (fState.status === 'pending' && fState.senderId === currentUser.uid) {
       return (
         <span className="text-[9px] font-normal text-slate-400 bg-white/5 px-2 py-0.5 rounded shrink-0">
-          📨 Solicitud
+          📨 Sent
         </span>
       );
     }
@@ -188,9 +184,9 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
           respondToFriendRequest(fState.id, 'accepted');
         }}
         className="text-[9px] font-black uppercase text-brand-gold bg-brand-gold/15 hover:bg-brand-gold hover:text-brand-bg px-2 py-0.5 rounded border border-brand-gold/30 transition-all flex items-center gap-0.5 shrink-0"
-        title="Aceptar solicitud"
+        title="Accept request"
       >
-        Aceptar!
+        Accept!
       </button>
     );
   };
@@ -207,12 +203,12 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
         <div className="lg:col-span-2 bg-brand-panel/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl relative" id="friend-requests-box">
           <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2 mb-4">
             <Users className="w-4 h-4 text-brand-emerald" />
-            Amigos y Solicitudes de Amistad
+            Friends & Friend Requests
           </h3>
 
           {incomingPendingRequests.length > 0 ? (
             <div className="space-y-3 mb-5 p-4 bg-brand-emerald/5 border border-brand-emerald/15 rounded-xl">
-              <span className="text-[10px] font-black uppercase text-brand-emerald tracking-wider block">¡Tienes Solicitudes de Amistad Pendientes!</span>
+              <span className="text-[10px] font-black uppercase text-brand-emerald tracking-wider block">¡You have pending friend requests!</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 {incomingPendingRequests.map(req => (
                   <div key={req.id} className="flex items-center justify-between bg-[#040c06] border border-white/5 p-2 px-3 rounded-lg text-xs">
@@ -221,14 +217,14 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                       <button
                         onClick={() => respondToFriendRequest(req.id, 'accepted')}
                         className="p-1 px-2.5 bg-brand-emerald hover:bg-emerald-450 text-brand-bg font-black text-[10px] uppercase rounded flex items-center gap-1 hover:scale-105 transition-all cursor-pointer"
-                        title="Aceptar"
+                        title="Accept"
                       >
-                        <Check className="w-3 h-3" /> Aceptar
+                        <Check className="w-3 h-3" /> Accept
                       </button>
                       <button
                         onClick={() => respondToFriendRequest(req.id, 'declined')}
                         className="p-1 px-1.5 bg-white/5 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 rounded transition-all cursor-pointer"
-                        title="Rechazar"
+                        title="Decline"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -240,7 +236,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
           ) : null}
 
           {/* LIST OF COLLECTORS TO ADD */}
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-2">Coleccionistas en la Comunidad</span>
+          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-2">Collectors in Community</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
             {users.filter(u => u.uid !== currentUser.uid).map(u => {
               const fState = getFriendship(u.uid);
@@ -258,22 +254,22 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                   <div>
                     {isAccepted ? (
                       <span className="text-[10px] font-bold text-brand-emerald bg-brand-emerald/15 border border-brand-emerald/30 rounded-lg px-2.5 py-1 flex items-center gap-1">
-                        🤝 Amigos
+                        🤝 Friends
                       </span>
                     ) : isPendingSent ? (
                       <span className="text-[10px] font-medium text-slate-400 bg-white/5 border border-white/5 rounded-lg px-2 py-1">
-                        📨 Enviada
+                        📨 Sent
                       </span>
                     ) : isPendingReceived ? (
                       <span className="text-[10px] font-black text-brand-gold bg-brand-gold/10 border border-brand-gold/30 rounded-lg px-2.5 py-1">
-                        Recibida!
+                        Received!
                       </span>
                     ) : (
                       <button
                         onClick={() => sendFriendRequest(u.uid)}
                         className="py-1 px-2.5 bg-brand-emerald hover:bg-emerald-450 text-[#050a06] font-black text-[10px] uppercase rounded-lg flex items-center gap-1 hover:scale-[1.03] transition-all cursor-pointer"
                       >
-                        <UserPlus className="w-3 h-3" /> Agregar
+                        <UserPlus className="w-3 h-3" /> Add Friend
                       </button>
                     )}
                   </div>
@@ -288,16 +284,16 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
           <div>
             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-1.5 mb-3">
               <Users className="w-4 h-4 text-brand-gold" />
-              Mi Círculo de Canjes
+              My Trading Circle
             </h3>
             <p className="text-[11px] text-slate-400 leading-relaxed font-semibold">
-              Tener amigos te permite proponer canjes seguros de forma directa y coordinar chats prioritarios.
+              Having friends allows you to propose direct trade transactions securely and prioritize private messaging.
             </p>
 
             <div className="space-y-2 mt-4 max-h-36 overflow-y-auto">
               {myFriends.length === 0 ? (
                 <div className="py-6 text-center text-slate-500 text-[11px] border border-dashed border-white/5 rounded-xl">
-                  Aún no tienes amigos agregados.
+                  No friends added yet.
                 </div>
               ) : (
                 myFriends.map(f => (
@@ -312,7 +308,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
 
           <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1.5 border-t border-white/5 pt-3 mt-4">
             <ShieldCheck className="w-3.5 h-3.5 text-brand-emerald shrink-0" />
-            <span>Sistema 100% verificado</span>
+            <span>100% Secure System</span>
           </div>
         </div>
       </div>
@@ -322,10 +318,10 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
         <div className="bg-[#0b1a0e]/90 border border-brand-emerald/40 rounded-2xl p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)] animate-fade-in" id="smart-matches-container">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-brand-gold fill-brand-gold" />
-            <h3 className="text-xs font-black text-white uppercase tracking-widest">¡Coincidencias Inteligentes de Canje!</h3>
+            <h3 className="text-xs font-black text-white uppercase tracking-widest">Intelligent Trade Matches!</h3>
           </div>
           <p className="text-xs text-slate-350 mb-5 font-semibold">
-            Los siguientes coleccionistas tienen figuritas repetidas que vos declaraste como repetidas / te faltan en tu inventario. ¡Canje Seguro Detectado!
+            These collectors have duplicate stickers that you have registered on your wanted checklist! Secure Match Detected!
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -362,14 +358,14 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                     </div>
                     
                     <h4 className="font-extrabold text-white text-[11px] mt-2 uppercase tracking-wide leading-none">{offer.country}</h4>
-                    <p className="text-[9px] text-slate-400 mt-1">Te falta en tu búsqueda</p>
+                    <p className="text-[9px] text-slate-400 mt-1">Missing from your list</p>
 
                     <button
                       type="button"
                       onClick={() => startProproposal(offer.ownerId, offer.ownerName, offer.code)}
                       className="mt-2.5 w-full py-1.5 bg-brand-emerald hover:bg-[#10b981] text-[#050a06] font-black uppercase text-[10px] tracking-wider rounded-lg transition-all cursor-pointer"
                     >
-                      Proponer Trueque
+                      Propose Swap
                     </button>
                   </div>
                 </div>
@@ -384,36 +380,23 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4 mb-6">
           <div className="flex items-center gap-2">
             <Compass className="w-5 h-5 text-brand-emerald" />
-            <h3 className="text-xs font-black text-white uppercase tracking-widest">Explorar Mercado de Figuritas</h3>
+            <h3 className="text-xs font-black text-white uppercase tracking-widest">Explore Sticker Marketplace</h3>
           </div>
-          <span className="text-[11px] text-slate-400 font-bold">Figuritas repetidas cargadas por la comunidad</span>
+          <span className="text-[11px] text-slate-400 font-bold">Duplicate stickers listed by general community</span>
         </div>
 
         {/* Filters and search info */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-          <div className="md:col-span-2 relative">
-            <Search className="w-4 h-4 text-brand-emerald absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por código (ARG 10) o país (Argentina)..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[#0d1f13] border border-white/10 rounded-xl text-xs focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald text-white placeholder:text-slate-500 font-bold"
-            />
-          </div>
-
-          <div>
-            <select
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-              className="w-full px-3 py-2.5 bg-[#0d1f13] border border-white/10 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald text-white cursor-pointer"
-            >
-              <option value="All">Todas las selecciones / países</option>
-              {existingCountries.map(country => (
-                <option key={country} value={country}>{country}</option>
-              ))}
-            </select>
-          </div>
+        <div className="max-w-xs mb-4">
+          <select
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+            className="w-full px-3 py-2.5 bg-[#0d1f13] border border-white/10 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald text-white cursor-pointer"
+          >
+            <option value="All">All Teams / Countries</option>
+            {existingCountries.map(country => (
+              <option key={country} value={country}>{country}</option>
+            ))}
+          </select>
         </div>
 
         {/* Collapsible Stats Section (Slightly Hidden Apartado) */}
@@ -423,7 +406,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
             onClick={() => setShowStats(!showStats)}
             className="text-[11px] uppercase font-black text-slate-400 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer pb-1"
           >
-            {showStats ? "Ocultar Estadísticas de la APP ▲" : "Ver Estadísticas y Coleccionistas Registrados ▼"}
+            {showStats ? "Hide App Statistics ▲" : "View Statistics and Registered Collectors ▼"}
           </button>
           
           <AnimatePresence>
@@ -436,25 +419,25 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
               >
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                   <div className="p-3 bg-[#0d1f13] border border-white/5 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Coleccionistas Activos</span>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Active Collectors</span>
                     <strong className="text-lg text-brand-emerald font-mono">{users.length}</strong>
                   </div>
                   <div className="p-3 bg-[#0d1f13] border border-white/5 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Figus Ofrecidas</span>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Offers Listed</span>
                     <strong className="text-lg text-slate-200 font-mono">{stickers.filter(s => s.type === 'repetida').length}</strong>
                   </div>
                   <div className="p-3 bg-[#0d1f13] border border-white/5 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Figus Solicitadas</span>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Wanted Stickers</span>
                     <strong className="text-lg text-brand-gold font-mono">{stickers.filter(s => s.type === 'faltante').length}</strong>
                   </div>
                   <div className="p-3 bg-[#0d1f13] border border-white/5 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Trueques Existentes</span>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase leading-tight">Total Trades</span>
                     <strong className="text-lg text-slate-350 font-mono">{trades.length}</strong>
                   </div>
                 </div>
                 
                 <div className="pt-2 text-[11px] text-slate-300 leading-relaxed font-semibold">
-                  👤 <span className="text-slate-400 font-bold">Coleccionistas en linea intercambiando:</span>{' '}
+                  👤 <span className="text-slate-400 font-bold">Collectors trading online:</span>{' '}
                   {users.map((u, i) => (
                     <span key={u.uid} className="inline-block bg-white/5 border border-white/5 px-2 py-0.5 rounded text-[10px] mr-1.5 text-white font-mono font-black">
                       @{u.displayName}
@@ -466,25 +449,10 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
           </AnimatePresence>
         </div>
 
-        {searchQuery.trim() !== "" && (
-          <div className="mb-6 p-3 bg-brand-emerald/10 border border-brand-emerald/30 rounded-xl text-xs flex justify-between items-center text-slate-250 animate-fade-in">
-            <span>
-              Mostrando resultados para: <strong className="text-white">"{searchQuery}"</strong> — Encontradas <strong className="text-brand-emerald font-black">{filteredOffers.length}</strong> copias repetidas listas para trade.
-            </span>
-            <button 
-              type="button" 
-              onClick={() => setSearchQuery("")} 
-              className="text-[10px] text-white hover:text-brand-emerald uppercase font-black bg-white/5 px-2.5 py-1 rounded border border-white/10 cursor-pointer"
-            >
-              Limpiar Buscador
-            </button>
-          </div>
-        )}
-
         {/* Listings Grid */}
         {filteredOffers.length === 0 ? (
           <div className="py-16 text-center text-slate-500 text-xs">
-            No se encontraron figuritas repetidas disponibles de otros usuarios en este momento.
+            No duplicate stickers listed right now.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="community-offers-grid">
@@ -528,14 +496,14 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                     </div>
                     
                     <h4 className="font-extrabold text-white text-[11px] mt-2 uppercase tracking-wide leading-none">{offer.country}</h4>
-                    <p className="text-[9px] text-slate-400 mt-1">Cromo {offer.code}</p>
+                    <p className="text-[9px] text-slate-400 mt-1">Sticker {offer.code}</p>
 
                     <button
                       type="button"
                       onClick={() => startProproposal(offer.ownerId, offer.ownerName, offer.code)}
                       className="mt-2.5 w-full py-1.5 bg-[#0d1f13] hover:bg-brand-emerald text-brand-emerald hover:text-[#050a06] border border-brand-emerald/30 hover:border-transparent font-black uppercase text-[10px] tracking-wider rounded-lg transition-all cursor-pointer"
                     >
-                      Proponer Trueque
+                      Propose Swap
                     </button>
                   </div>
                 </div>
@@ -557,15 +525,15 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
             >
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-[#030704] text-white">
                 <div>
-                  <h3 className="font-black text-sm uppercase tracking-wider">Iniciar Propuesta de Canje</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 font-semibold">Negociando con @{proposingToUser.name}</p>
+                  <h3 className="font-black text-sm uppercase tracking-wider">Propose Sticker Trade</h3>
+                  <p className="text-xs text-slate-400 mt-0.5 font-semibold">Trading with @{proposingToUser.name}</p>
                 </div>
                 <button 
                   onClick={() => setProposingToUser(null)}
                   className="text-xs font-bold uppercase tracking-widest text-[#050a06] hover:text-white px-3 py-1.5 bg-brand-emerald rounded-lg transition-all cursor-pointer"
                   disabled={!!successInfo}
                 >
-                  Cerrar
+                  Close
                 </button>
               </div>
 
@@ -573,18 +541,18 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                 <div className="p-10 text-center flex flex-col items-center justify-center space-y-3">
                   <CheckCircle2 className="w-16 h-16 text-brand-emerald animate-bounce" />
                   <p className="text-white font-black text-base uppercase tracking-tight">{successInfo}</p>
-                  <p className="text-xs text-slate-400">Redirigiendo a tus salas de chat...</p>
+                  <p className="text-xs text-slate-400">Redirecting to your trade chatrooms...</p>
                 </div>
               ) : (
                 <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-200">
                   
                   {/* STEP 1: CHOOSE MY CARDS TO OFFER */}
                   <div>
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-brand-emerald mb-2">1. ¿Qué figuritas tuyas le ofreces a {proposingToUser.name}?</h4>
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-brand-emerald mb-2">1. Which of your duplicate stickers do you offer to @{proposingToUser.name}?</h4>
                     {myRepeated.length === 0 ? (
                       <div className="p-3 bg-amber-950/40 border border-brand-gold/30 text-brand-gold rounded-xl text-xs flex gap-2">
                         <AlertCircle className="w-4 h-4 shrink-0" />
-                        <span>No tienes repetidas cargadas. No podés proponer trueques hasta cargar al menos una figurita disponible en tu inventario de canje ("Mis Figus").</span>
+                        <span>You do not have any registered duplicates. You cannot propose a trade until you specify what available stickers you are giving to others first.</span>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto pr-1">
@@ -604,7 +572,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                               className={`p-2.5 rounded-lg text-left border text-xs transition-all ${
                                 isSelected 
                                   ? 'border-brand-emerald bg-brand-emerald/15 text-brand-emerald shadow-[0_0_10px_rgba(16,185,129,0.15)] font-black' 
-                                  : 'border-white/10 bg-[#0d1f13] text-slate-350 hover:bg-white/5 cursor-pointer'
+                                  : 'border-white/10 bg-[#0d1f13] text-slate-355 hover:bg-white/5 cursor-pointer'
                               }`}
                             >
                               <div className="font-mono font-black text-white">{s.code}</div>
@@ -618,7 +586,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
 
                   {/* STEP 2: CHOOSE THEIR CARDS TO ASK FOR */}
                   <div>
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-brand-gold mb-2">2. ¿Qué figuritas de {proposingToUser.name} pretendes recibir?</h4>
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-brand-gold mb-2">2. Which stickers of @{proposingToUser.name} do you want to receive?</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto pr-1">
                       {stickers
                         .filter(s => s.ownerId === proposingToUser.id && s.type === 'repetida')
@@ -653,9 +621,9 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                   <div className="p-3.5 bg-brand-bg border border-white/5 rounded-xl flex items-start gap-2.5">
                     <ShieldEllipsis className="w-5 h-5 text-brand-emerald shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-black text-white uppercase tracking-wider">Acuerdo Pre-Sindicado Seguro</p>
+                      <p className="text-xs font-black text-white uppercase tracking-wider">Secure Exchange Arrangement</p>
                       <p className="text-[10px] text-slate-400 leading-relaxed mt-1">
-                        Al enviar la propuesta, se habilitará un chat privado exclusivo donde pueden acordar el intercambio en un lugar seguro (por ejemplo, colegios, polideportivos, paseos públicos comerciales).
+                        By submitting this proposal, a private negotiation room is enabled where both collectors can safely arrange to swap in public safe-zones.
                       </p>
                     </div>
                   </div>
@@ -668,7 +636,7 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
                     className="w-full py-3 bg-gradient-to-r from-brand-emerald to-emerald-600 text-[#050a06] rounded-xl text-xs font-black uppercase tracking-wider hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-[0_4px_20px_rgba(16,185,129,0.35)] flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Send className="w-4 h-4 cursor-pointer" />
-                    Enviar Solicitud de Coche / Canje
+                    Send Trade Proposal
                   </button>
 
                 </div>

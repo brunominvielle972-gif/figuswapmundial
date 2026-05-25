@@ -164,7 +164,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (isRealFirebase && db) {
           setDoc(doc(db, 'friendRequests', newRequest.id), newRequest)
             .then(() => {
-              setConnectionNotification(`¡Te conectaste con @${inviterName}! Ya pueden proponer canjes.`);
+              setConnectionNotification(`You connected with @${inviterName}! You can now propose trades.`);
               localStorage.removeItem('pending_invite_by');
             })
             .catch(err => {
@@ -175,7 +175,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           existing.push(newRequest);
           localStorage.setItem('sticker_friend_requests', JSON.stringify(existing));
           setFriendRequests(existing);
-          setConnectionNotification(`¡Te conectaste con @${inviterName}! Ya pueden proponer canjes.`);
+          setConnectionNotification(`You connected with @${inviterName}! You can now propose trades.`);
           localStorage.removeItem('pending_invite_by');
         }
       } else {
@@ -643,7 +643,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const connectUserByCode = async (code: string): Promise<{ success: boolean; displayName?: string; error?: string }> => {
     if (!currentUser) {
-      return { success: false, error: "Iniciá sesión para conectarte con amigos, crack." };
+      return { success: false, error: "Please sign in to connect with friends." };
     }
 
     let targetUid = code.trim();
@@ -665,11 +665,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     targetUid = targetUid.trim();
 
     if (!targetUid) {
-      return { success: false, error: "El código o link ingresado está vacío, ídolo." };
+      return { success: false, error: "The entered code or link is empty." };
     }
 
     if (targetUid === currentUser.uid) {
-      return { success: false, error: "¡No podés conectarte con vos mismo, crack! Pasale este código a un amigo." };
+      return { success: false, error: "You cannot connect with yourself! Share this code with a friend." };
     }
 
     const connectionExists = friendRequests.some(r => 
@@ -681,13 +681,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (connectionExists) {
       const fUser = users.find(u => u.uid === targetUid);
       return { 
-        success: true, 
-        displayName: fUser?.displayName || "Tu amigo", 
-        error: "Ya están conectados. ¡Buscalos en Mensajes o en el Círculo de Canjes!" 
+         success: true, 
+         displayName: fUser?.displayName || "Your Friend", 
+         error: "You are already connected." 
       };
     }
 
-    let targetName = "Coleccionista";
+    let targetName = "Collector";
     if (isRealFirebase && db) {
       try {
         const uSnap = await getDoc(doc(db, 'users', targetUid));
@@ -695,18 +695,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const uData = uSnap.data() as UserProfile;
           targetName = uData.displayName;
         } else {
-          return { success: false, error: "No se encontró ningún coleccionista para ese código en el servidor. Que tu amigo verifique si inició sesión." };
+          return { success: false, error: "No collector snapshot was found for that code. Please verify they are logged in." };
         }
       } catch (err) {
         console.error("Error retrieving user profile:", err);
-        return { success: false, error: "Error de red al consultar el código. Comprobá tu conexión de internet." };
+        return { success: false, error: "Network error querying code. Check your connection." };
       }
     } else {
       const localUser = users.find(u => u.uid === targetUid);
       if (localUser) {
         targetName = localUser.displayName;
       } else {
-        targetName = "Amigo_" + targetUid.substring(0, 4).toUpperCase();
+        targetName = "Friend_" + targetUid.substring(0, 4).toUpperCase();
         const mockProfile: UserProfile = {
           uid: targetUid,
           displayName: targetName,
@@ -730,18 +730,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (isRealFirebase && db) {
       try {
         await setDoc(doc(db, 'friendRequests', newRequest.id), newRequest);
-        setConnectionNotification(`¡Te conectaste con @${targetName}! Ya pueden proponer canjes.`);
+        setConnectionNotification(`You connected with @${targetName}! You can now propose trades.`);
         return { success: true, displayName: targetName };
       } catch (err) {
         console.error("Error connecting users:", err);
-        return { success: false, error: "Error al registrar la amistad en la nube." };
+        return { success: false, error: "Error registering connection." };
       }
     } else {
       const existing = JSON.parse(localStorage.getItem('sticker_friend_requests') || '[]');
       existing.push(newRequest);
       localStorage.setItem('sticker_friend_requests', JSON.stringify(existing));
       setFriendRequests(existing);
-      setConnectionNotification(`¡Te conectaste con @${targetName}! Ya pueden proponer canjes.`);
+      setConnectionNotification(`You connected with @${targetName}! You can now propose trades.`);
       return { success: true, displayName: targetName };
     }
   };
