@@ -71,8 +71,8 @@ function AppContent() {
                 <Trophy className="w-5 h-5 text-brand-bg" />
               </div>
               <div>
-                <h1 className="text-xl font-black tracking-tighter italic uppercase text-brand-gold leading-none">FiguSwap <span className="text-white">Mundial</span></h1>
-                <p className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-mono mt-1">Canje Seguro Activo</p>
+                <h1 className="text-xl font-black tracking-tighter italic uppercase text-brand-gold leading-none">FiguSwap <span className="text-white">2026</span></h1>
+                <p className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-mono mt-1">Secure Swap Active</p>
               </div>
             </div>
 
@@ -83,12 +83,12 @@ function AppContent() {
                 onClick={() => setActiveTab('album')}
                 className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border ${
                   activeTab === 'album' 
-                    ? 'bg-gradient-to-b from-brand-card to-brand-panel border-brand-emerald/40 text-brand-emerald shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+                    ? 'bg-gradient-to-b from-brand-card to-brand-panel border-brand-emerald/40 text-brand-emerald shadow-[0_0_15px_rgba(16,185,129,0.15)] font-bold' 
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent font-medium'
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
-                Mis Figus
+                My Collection
               </button>
 
               <button
@@ -96,12 +96,12 @@ function AppContent() {
                 onClick={() => setActiveTab('trades')}
                 className={`relative flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border ${
                   activeTab === 'trades' 
-                    ? 'bg-gradient-to-b from-brand-card to-brand-panel border-brand-emerald/40 text-brand-emerald shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+                    ? 'bg-gradient-to-b from-brand-card to-brand-panel border-brand-emerald/40 text-brand-emerald shadow-[0_0_15px_rgba(16,185,129,0.15)] font-bold' 
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent font-medium'
                 }`}
               >
                 <Handshake className="w-4 h-4" />
-                Mensajes
+                Messages
                 {activeTradeCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center border-2 border-brand-panel">
                     {activeTradeCount}
@@ -119,14 +119,14 @@ function AppContent() {
                 type="button"
                 onClick={() => setShowAIChat(true)}
                 className="relative bg-gradient-to-r from-[#0d2a1b] to-brand-panel hover:from-brand-emerald hover:to-emerald-400 text-brand-emerald hover:text-brand-bg px-3.5 py-2.5 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all border border-brand-emerald/30 shadow-[0_0_15px_rgba(16,185,129,0.12)] group shrink-0"
-                title="Consultar Sabelotodo IA"
+                title="Consult FiguSwap Expert AI"
               >
                 <Sparkles className="w-3.5 h-3.5 text-brand-emerald group-hover:text-brand-bg shrink-0 animate-pulse" />
-                <span>⚽ Sabelotodo IA</span>
+                <span>⚽ Expert AI</span>
               </button>
 
               <div className="hidden sm:flex flex-col items-end text-right">
-                <span className="text-xs font-bold text-slate-200 leading-none">{currentUser?.displayName || "Sin Usuario"}</span>
+                <span className="text-xs font-bold text-slate-200 leading-none">{currentUser?.displayName || "No User"}</span>
                 <span className="text-[10px] text-slate-400 font-mono mt-1">{currentUser?.email}</span>
               </div>
               <div className="h-11 w-11 rounded-xl border-2 border-brand-gold p-0.5 overflow-hidden shadow-[0_0_15px_rgba(251,191,36,0.2)]">
@@ -166,10 +166,10 @@ function AppContent() {
             <div className="bg-brand-panel/85 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-2xl relative">
               <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
                 <ShieldCheck className="w-5 h-5 text-brand-emerald shrink-0" />
-                Canje Seguro Activo
+                Secure Swap Active
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                El intercambio de figuritas es una actividad social muy divertida, pero siempre debe hacerse bajo pautas seguras:
+                Sticker swapping is a fun social activity, but it should always be done based on safety rules:
               </p>
 
               <ol className="space-y-4 text-xs">
@@ -178,8 +178,8 @@ function AppContent() {
                     1
                   </span>
                   <div>
-                    <span className="font-bold text-slate-100">Canje sin compartir datos</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5">No des información de tu dirección ni teléfono. Usa el chat privado integrado de cada trueque.</p>
+                    <span className="font-bold text-slate-100">Trade without sharing private details</span>
+                    <p className="text-slate-400 text-[11px] mt-0.5">Do not reveal your home address or phone number. Use each trade's private built-in chat module.</p>
                   </div>
                 </li>
 
@@ -188,8 +188,8 @@ function AppContent() {
                     2
                   </span>
                   <div>
-                    <span className="font-bold text-slate-100">Punto de encuentro público</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5">Acuerden juntarse a canjear en plazas públicas, escuelas, polideportivos o shoppings.</p>
+                    <span className="font-bold text-slate-100">Meet in open public spaces</span>
+                    <p className="text-slate-400 text-[11px] mt-0.5">Agree to complete your swaps in public squares, schools, clubs, or shopping malls.</p>
                   </div>
                 </li>
 
@@ -198,39 +198,14 @@ function AppContent() {
                     3
                   </span>
                   <div>
-                    <span className="font-bold text-slate-100">Verificar juntos</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">Revisen el estado físico y los códigos de las figuritas repetidas antes de marcar el canje como 'Completado'.</p>
+                    <span className="font-bold text-slate-100">Check duplicate cards together</span>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">Always inspect the details and physical state of stickers before confirming the swap as complete.</p>
                   </div>
                 </li>
               </ol>
 
               <div className="mt-5 p-3 rounded-xl bg-white/5 border border-white/5 text-[11px] text-slate-300 leading-normal">
-                💡 <strong>¿Cómo funciona?</strong> Proponés un cambio indicando qué ofreces y qué deseas. Cuando ambos aceptan, el chat queda formalmente habilitado para coordinar. Una vez concretado el intercambio, marcalo como realizado para mantener tu stock actualizado.
-              </div>
-            </div>
-
-            {/* QUICK LEGEND DICTIONARY */}
-            <div className="bg-brand-panel/85 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-2xl">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
-                <HelpCircle className="w-5 h-5 text-slate-300 shrink-0" />
-                Filtros por Códigos
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                Los códigos de tus figuritas se generan automáticamente con las tres primeras letras del país y el número ingresado:
-              </p>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between items-center bg-[#0d1f13] border border-white/5 p-2.5 rounded-lg text-[11px]">
-                  <span className="font-mono font-bold text-brand-emerald">ARG-10</span>
-                  <span className="text-slate-400 font-medium">Argentina cromo 10</span>
-                </div>
-                <div className="flex justify-between items-center bg-[#0d1f13] border border-white/5 p-2.5 rounded-lg text-[11px]">
-                  <span className="font-mono font-bold text-brand-emerald">BRA-09</span>
-                  <span className="text-slate-400 font-medium">Brasil cromo 09</span>
-                </div>
-                <div className="flex justify-between items-center bg-[#0d1f13] border border-white/5 p-2.5 rounded-lg text-[11px]">
-                  <span className="font-mono font-bold text-brand-emerald">FRA-10</span>
-                  <span className="text-slate-400 font-medium">Francia cromo 10</span>
-                </div>
+                💡 <strong>How it works:</strong> State what stickers you have duplicate and what you are looking for. Once both users agree, private chat opens. Update inventories automatically when the physical trade completes!
               </div>
             </div>
 
@@ -242,7 +217,7 @@ function AppContent() {
       {/* 4. FOOTER */}
       <footer className="bg-[#030704]/95 text-slate-500 text-center py-8 border-t border-white/10 text-xs mt-12 relative z-10">
         <p className="max-w-7xl mx-auto px-4 font-medium">
-          © {new Date().getFullYear()} CanjeFigus Mundial. Desarrollado como una plataforma de red segura para facilitar el encuentro de coleccionistas y asegurar que todos llenen su álbum.
+          © {new Date().getFullYear()} FiguSwap 2026. Made as a secure networking space to bring collectors together and help everyone fill their checklist album.
         </p>
       </footer>
 
@@ -256,19 +231,19 @@ function AppContent() {
               <Trophy className="w-8 h-8 text-brand-bg" />
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-brand-gold tracking-tight italic uppercase mb-2">¡Tu Tablilla de Figus!</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-brand-gold tracking-tight italic uppercase mb-2">My Sticker Checklist Dashboard!</h2>
             <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto mb-6">
-              Te compartieron este link para que registres tus figuritas repetidas y faltantes e intercambies de forma coordinada.
+              A friend shared this link with you! Record your duplicate and missing stickers to propose secure swaps instantly.
             </p>
 
             <form onSubmit={handleWelcomeSubmit} className="space-y-4">
               <div className="text-left">
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Escribí tu Nombre o Nickname:</label>
+                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Enter your Name or Nickname:</label>
                 <input
                   type="text"
                   required
                   maxLength={25}
-                  placeholder="Ej: Bruno, Santi, Sofi..."
+                  placeholder="E.g., Bruno, Santi, Sofi..."
                   value={welcomeName}
                   onChange={(e) => setWelcomeName(e.target.value)}
                   className="w-full bg-[#0d1f13] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald font-bold placeholder:text-slate-500 placeholder:font-normal"
@@ -279,7 +254,7 @@ function AppContent() {
                 type="submit"
                 className="w-full py-3 px-4 bg-brand-emerald hover:bg-emerald-400 active:scale-[0.98] text-brand-bg font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-[0_4px_15px_rgba(16,185,129,0.3)]"
               >
-                Comenzar mi Álbum 🚀
+                Start My Album 🚀
               </button>
             </form>
           </div>
@@ -296,7 +271,7 @@ function AppContent() {
           }`}
         >
           <BookOpen className="w-5 h-5" />
-          <span className="text-[10px] uppercase tracking-wider">Mis Figus</span>
+          <span className="text-[10px] uppercase tracking-wider">My Collection</span>
         </button>
 
         <button
@@ -307,7 +282,7 @@ function AppContent() {
           }`}
         >
           <Handshake className="w-5 h-5" />
-          <span className="text-[10px] uppercase tracking-wider">Mensajes</span>
+          <span className="text-[10px] uppercase tracking-wider">Messages</span>
           {activeTradeCount > 0 && (
             <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center animate-bounce">
               {activeTradeCount}
@@ -332,7 +307,7 @@ function AppContent() {
                 <Sparkles className="w-5 h-5 animate-pulse text-brand-emerald" />
               </div>
               <div className="text-left">
-                <b className="text-[11px] font-black uppercase text-brand-emerald tracking-wider block">¡Conexión Exitosa!</b>
+                <b className="text-[11px] font-black uppercase text-brand-emerald tracking-wider block">Connection Successful!</b>
                 <p className="text-[11.5px] text-slate-300 font-semibold leading-relaxed mt-0.5">{connectionNotification}</p>
               </div>
             </div>
@@ -371,13 +346,13 @@ function AppContent() {
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <div className="flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-brand-gold animate-pulse" />
-                  <span className="text-xs uppercase font-black font-mono tracking-widest text-slate-350">FiguSabelotodo IA</span>
+                  <span className="text-xs uppercase font-black font-mono tracking-widest text-slate-350 font-bold">FiguSwap Expert AI</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowAIChat(false)}
                   className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer flex items-center justify-center border border-white/5"
-                  title="Cerrar Asistente"
+                  title="Close Assistant"
                 >
                   <X className="w-5 h-5" />
                 </button>

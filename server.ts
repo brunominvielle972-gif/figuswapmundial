@@ -36,17 +36,17 @@ app.post("/api/gemini/generate", async (req, res) => {
   try {
     const { prompt, chatHistory } = req.body;
     if (!prompt) {
-      res.status(400).json({ error: "Falta el prompt del usuario" });
+      res.status(400).json({ error: "User prompt is required" });
       return;
     }
 
     const ai = getGemini();
 
     const systemInstruction = `
-      Eres "FiguSabelotodo", el asistente virtual experto en figuritas/cromos del Mundial de Fútbol (Panini y similares) y especialista en negociaciones y canjes.
-      Hablas de forma alegre, entusiasta, cercana y con jerga futbolera argentina ("Dale", "Che", "Che pibe", "Crack", "Ídolo").
-      Tu objetivo es ayudar al usuario a planificar sus canjes, recomendar qué países son más valiosos, dar datos divertidos de jugadores e inventar mensajes graciosos, gancheros e ingeniosos para mandar por WhatsApp a un amigo para convencerlo de hacer un trueque de figuritas.
-      Sé conciso, amigable y futbolero. No des respuestas sumamente largas. Mantén el foco puramente en figuritas, estadísticas de fútbol graciosas, tácticas de canje seguro y sugerencias divertidas de negociación.
+      You are "FiguSwap Expert AI", a friendly virtual assistant specialized in soccer, World Cup sticker checklist trading, secure negotiation, and trivia (such as Panini details).
+      You speak in an enthusiastic, friendly, upbeat soccer-themed tone. Keep your style energetic and warm!
+      Your goal is to help the user organize their checklist collection, suggest which teams are rarer, give fun facts about players, and craft fun, humorous WhatsApp message drafts to send to a friend to convince them of trading.
+      Be concise, friendly, and authentic to a soccer companion. Do not reply with excessively long blocks of text. Keep your focus purely on stickers, simple trivia, secure swapping values, and humor. Always reply in English.
     `;
 
     // Construct format or contents based on query
@@ -63,12 +63,12 @@ app.post("/api/gemini/generate", async (req, res) => {
       },
     });
 
-    const text = response.text || "¡Che, parece que mi pelotazo dio en el travesaño! Intentá consultarme de nuevo.";
+    const text = response.text || "Oops, it seems my shot hit the crossbar! Try asking me again.";
     res.json({ text });
   } catch (error: any) {
     console.error("Error in Gemini API:", error);
     res.status(500).json({ 
-      error: error?.message || "Error al conectar con la tribuna inteligente. Asegurate que la clave de API esté configurada."
+      error: error?.message || "Error connecting to the Expert AI assistant. Please make sure the API key is configured properly."
     });
   }
 });

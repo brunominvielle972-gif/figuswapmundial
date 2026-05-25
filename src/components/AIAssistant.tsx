@@ -17,7 +17,7 @@ export default function AIAssistant() {
     return [
       {
         role: "model",
-        text: "¡Hola, crack! Bicicleta y al ángulo. ⚽ Soy **FiguSabelotodo**, tu asistente personal de canjes. Preguntame cómo convencer a tus amigos de pasarte esa repu que querés, o pedime un tip seguro de negociación futbolera. ¿Qué consulta tenés para hoy, ídolo?"
+        text: "Hello there, champion! ⚽ I am **FiguSwap Expert AI**, your virtual sticker trading assistant. Ask me how to negotiate with your buddies for those hard-to-find shinies, or request a pro soccer-style trading strategy. What can I help you find today, star?"
       }
     ];
   });
@@ -48,13 +48,12 @@ export default function AIAssistant() {
     // Intercept client chat deletion request phrases
     const promptLower = promptToSend.toLowerCase();
     if (
-      promptLower.includes("borra el chat") || 
-      promptLower.includes("borrar chat") || 
-      promptLower.includes("limpiar chat") || 
-      promptLower.includes("vaciar chat") || 
-      promptLower.includes("reiniciar chat") ||
-      promptLower.includes("borrar el chat") ||
-      promptLower.includes("limpia el chat")
+      promptLower.includes("clear chat") || 
+      promptLower.includes("reset chat") || 
+      promptLower.includes("delete chat") || 
+      promptLower.includes("wipe chat") || 
+      promptLower.includes("erase chat") ||
+      promptLower.includes("empty chat")
     ) {
       const newUserMessage: Message = { role: "user", text: promptToSend };
       setMessages((prev) => [...prev, newUserMessage]);
@@ -63,7 +62,7 @@ export default function AIAssistant() {
         const reset: Message[] = [
           {
             role: "model",
-            text: "¡Hecho, crack! 🧹 Borré todo nuestro historial de conversación como me pediste. Contame, ¿en qué más te puedo ayudar sobre el álbum de figuritas, ídolo?"
+            text: "All done! 🧹 I have cleared our entire chat history as requested. Tell me, is there anything else I can assist you with regarding your sticker collection?"
           }
         ];
         setMessages(reset);
@@ -99,14 +98,14 @@ export default function AIAssistant() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al conectar con la tribuna");
+        throw new Error(errorData.error || "Error connecting to the soccer stands");
       }
 
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "model", text: data.text }]);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err?.message || "No pude conectar con el servidor. Revisá tu conexión.");
+      setErrorMsg(err?.message || "Could not connect to the server. Please check your network connection.");
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +122,7 @@ export default function AIAssistant() {
     const reset = [
       {
         role: "model",
-        text: "¡Pizarrón en blanco! 📋 Decime qué necesitás consultar sobre las figus de tu álbum."
+        text: "Blank board! 📋 Tell me what you would like to know about your sticker collection."
       } as Message
     ];
     setMessages(reset);
@@ -132,16 +131,16 @@ export default function AIAssistant() {
 
   const QUICK_PROMPTS = [
     {
-      label: "📲 Mensaje gracioso de WhatsApp",
-      prompt: "Escribime un mensaje muy divertido, futbolero y ganchero para mandarle a un amigo por WhatsApp exigiéndole de buena onda que me entregue una figurita repetida difícil que él tiene y yo quiero desesperadamente a cambio de mis repetidas comunes. Usa modismos argentinos."
+      label: "📲 Funny WhatsApp Message ideas",
+      prompt: "Write a fun, soccer-themed, engaging message to send to a friend via WhatsApp, jokingly demanding they give me a rare duplicate sticker they have in exchange for some of my common ones. Keep the tone friendly and humorous."
     },
     {
-      label: "🏆 ¿Qué figuritas son las más difíciles?",
-      prompt: "¿Cuáles son históricamente las figuritas y cromos más difíciles de conseguir en los álbumes del Mundial de Panini, qué leyendas o cromos especiales brillaron más y qué técnica hay para conseguirlos?"
+      label: "🏆 What are the absolute rarest stickers?",
+      prompt: "What are historically the most difficult and rarest stickers to get in Panini World Cup albums? Are there special holographic shiny stickers, or legendary key players? Suggest a clever tactic to complete the album."
     },
     {
-      label: "⚽ ¿Cómo negociar una brillante?",
-      prompt: "Dame 3 tips infalibles de canje para cambiar figuritas comunes por una brillante o cromos con hologramas difíciles sin quedar en desventaja."
+      label: "⚽ How to trade for a Shiny sticker?",
+      prompt: "Give me 3 top-tier sticker trading tips to land shiny holographic stickers or rare player cards in exchange for common ones without losing out."
     }
   ];
 
@@ -154,8 +153,8 @@ export default function AIAssistant() {
             <Sparkles className="w-5 h-5 text-brand-emerald animate-pulse" />
           </div>
           <div>
-            <h4 className="text-sm font-black text-white uppercase tracking-wider leading-none">FiguSabelotodo IA</h4>
-            <span className="text-[10px] text-brand-emerald font-semibold font-mono uppercase tracking-widest mt-0.5 block">🧠 Gemini Activa</span>
+            <h4 className="text-sm font-black text-white uppercase tracking-wider leading-none">FiguSwap Expert AI</h4>
+            <span className="text-[10px] text-brand-emerald font-semibold font-mono uppercase tracking-widest mt-0.5 block">🧠 Powered by Gemini</span>
           </div>
         </div>
         <button
@@ -178,7 +177,7 @@ export default function AIAssistant() {
             }`}
           >
             <span className="text-[9px] text-slate-400 font-mono uppercase mb-0.5 tracking-wider font-semibold">
-              {msg.role === "user" ? `@${currentUser?.displayName || "Jugador"}` : "⚽ FiguSabelotodo"}
+              {msg.role === "user" ? `@${currentUser?.displayName || "Player"}` : "⚽ AI Expert"}
             </span>
             <div
               className={`px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed font-medium break-words ${
@@ -209,7 +208,7 @@ export default function AIAssistant() {
         {isLoading && (
           <div className="flex flex-col max-w-[80%] self-start mr-auto items-start">
             <span className="text-[9px] text-brand-emerald font-mono uppercase mb-0.5 tracking-wider font-bold animate-pulse">
-              ⚽ Analizando jugada...
+              ⚽ Analyzing strategy...
             </span>
             <div className="bg-slate-900 border border-brand-emerald/20 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.05)]">
               <span className="w-1.5 h-1.5 bg-brand-emerald rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
@@ -231,7 +230,7 @@ export default function AIAssistant() {
       {messages.length <= 2 && !isLoading && (
         <div className="px-4 py-2 border-t border-white/5 bg-[#070c14] flex flex-col gap-1.5">
           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-            <HelpCircle className="w-3 h-3 text-brand-gold" /> Sugerencias tácticas de un click:
+            <HelpCircle className="w-3 h-3 text-brand-gold" /> One-click template helper queries:
           </span>
           <div className="flex flex-col gap-1">
             {QUICK_PROMPTS.map((qp, id) => (
@@ -256,7 +255,7 @@ export default function AIAssistant() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder="Consultale al sabelotodo futbolero..."
+          placeholder="Ask the tactical soccer trading expert..."
           className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald resize-none scrollbar-none"
           disabled={isLoading}
         />
