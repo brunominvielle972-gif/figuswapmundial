@@ -10,7 +10,7 @@ import { Plus, Trash2, ClipboardCheck, Sparkles, Check, X, ShieldCheck, HelpCirc
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function MyCatalog() {
-  const { stickers, currentUser, addSticker, removeSticker, loginWithGoogle, createNewProfile, isFirebaseActive } = useApp();
+  const { stickers, currentUser, addSticker, removeSticker, loginWithGoogle, loginAnonymously, isFirebaseActive } = useApp();
   const [localName, setLocalName] = useState("");
   
   // Form and interactive modal states
@@ -29,55 +29,74 @@ export default function MyCatalog() {
   } | null>(null);
 
   if (!currentUser) {
-    const handleManualSubmit = (e: React.FormEvent) => {
+    const handleAnonymousSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (!localName.trim()) return;
-      createNewProfile(localName.trim(), `${localName.trim().toLowerCase().replace(/\s+/g, '')}@figus.com`);
+      loginAnonymously(localName.trim());
     };
 
     return (
       <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-brand-panel rounded-3xl border border-white/10 shadow-2xl animate-fade-in" id="catalog-logged-out">
         <ShieldCheck className="w-12 h-12 text-brand-emerald mb-4 animate-[pulse_2s_infinite]" />
-        <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Log in to view your stickers</h3>
+        <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">Acceder al Álbum</h3>
         <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-6">
-          Log in with your account to load your duplicate sticker checklist and exchange in real-time with friends.
+          Registrate o inicia sesión para registrar tus figuritas repetidas y realizar intercambios en tiempo real con tus amigos.
         </p>
 
-        <div className="w-full max-w-sm bg-[#0a180f] p-6 rounded-2xl border border-brand-emerald/20 shadow-inner">
+        <div className="w-full max-w-md bg-[#0a180f] p-6 rounded-2xl border border-brand-emerald/20 shadow-inner space-y-6">
+          {/* Opción A: Google Auth */}
           {isFirebaseActive ? (
-            <button
-              onClick={loginWithGoogle}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-650 to-amber-500 hover:from-red-550 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
-            >
-              ⚽ Sign in with Google
-            </button>
+            <div className="space-y-2">
+              <span className="block text-[10px] font-black uppercase text-slate-500 tracking-widest text-left mb-1">Opción A: Sesión con Google (Web)</span>
+              <button
+                onClick={loginWithGoogle}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200"
+              >
+                <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                  <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                    <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.4C21.68,11.75 21.56,11.4 21.35,11.1z" fill="#4285F4" />
+                    <path d="M12,20.82c2.4,0 4.41,-0.8 5.88,-2.16l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.26,-1.56 -4.96,-3.66H2.9V16.1C4.38,19.04 7.42,20.82 12,20.82z" fill="#34A853" />
+                    <path d="M7.04,13.4a5.3,5.3,0,0,1,0,-3.38V7.44H2.9a10,10,0,0,0,0,8.54l4.14,-2.58z" fill="#FBBC05" />
+                    <path d="M12,6.94c1.3,0 2.48,0.45 3.4,1.33l2.55,-2.55C16.4,4.35 14.41,3.54 12,3.54c-4.58,0 -7.62,1.78 -9.1,4.72l4.14,2.58c0.7,-2.1 2.65,-3.66 4.96,-3.66z" fill="#EA4335" />
+                  </g>
+                </svg>
+                Iniciar Sesión con Google
+              </button>
+            </div>
           ) : (
-            <div className="text-[11px] text-amber-500 mb-3 font-semibold font-mono">Simulator Mode Offline</div>
+            <div className="text-[11px] text-amber-500 mb-3 font-semibold font-mono">Modo Simulador Activo</div>
           )}
 
-          <div className="flex items-center my-4">
+          <div className="flex items-center">
             <div className="flex-1 border-t border-white/5"></div>
-            <span className="px-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider">Or with your Nickname</span>
+            <span className="px-3 text-[9px] text-slate-500 font-bold uppercase tracking-wider">O TAMBIÉN</span>
             <div className="flex-1 border-t border-white/5"></div>
           </div>
 
-          <form onSubmit={handleManualSubmit} className="space-y-3">
-            <input
-              type="text"
-              required
-              maxLength={25}
-              placeholder="Enter your name (e.g. Santi, Sofi)"
-              value={localName}
-              onChange={(e) => setLocalName(e.target.value)}
-              className="w-full bg-[#040c06] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:outline-none focus:border-brand-emerald font-bold font-sans placeholder:text-slate-600"
-            />
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 bg-[#112d1b] hover:bg-[#1a4427] text-brand-emerald font-black text-[11px] uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-brand-emerald/30 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-            >
-              Quick Soccer Access 🏆
-            </button>
-          </form>
+          {/* Opción B: Anonymous Online Access */}
+          <div className="space-y-3">
+            <span className="block text-[10px] font-black uppercase text-brand-emerald tracking-widest text-left">Opción B: Acceso Rápido (Recomendado APK / Celular)</span>
+            <p className="text-[11px] text-slate-400 text-left leading-relaxed">
+              ¿Usas la app en el celular? Ingresa un apodo y conéctate online al instante con amigos sin errores de redirección.
+            </p>
+            <form onSubmit={handleAnonymousSubmit} className="space-y-3 pt-1">
+              <input
+                type="text"
+                required
+                maxLength={25}
+                placeholder="Escribe tu Nombre o Apodo..."
+                value={localName}
+                onChange={(e) => setLocalName(e.target.value)}
+                className="w-full bg-[#040c06] border border-brand-emerald/20 hover:border-brand-emerald/40 rounded-xl px-4 py-3 text-xs text-center text-white focus:outline-none focus:border-brand-emerald font-bold placeholder:text-slate-600"
+              />
+              <button
+                type="submit"
+                className="w-full py-3 px-4 bg-brand-emerald hover:bg-emerald-400 text-brand-bg font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)] border border-transparent"
+              >
+                ⚽ Entrar Online al Instante 🚀
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );

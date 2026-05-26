@@ -39,7 +39,7 @@ import {
   deleteDoc,
   getDoc
 } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, signInAnonymously } from 'firebase/auth';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -66,6 +66,7 @@ interface AppContextType {
   removeFriend: (friendId: string) => void;
   connectUserByCode: (code: string) => Promise<{ success: boolean; displayName?: string; error?: string }>;
   loginWithGoogle: () => Promise<void>;
+  loginAnonymously: (name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -241,12 +242,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           console.error("Google Auth Redirect Result error:", err);
         });
 
-      const unsubscribe = onAuthStateChanged(auth, (user: any) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user: any) => {
         if (user) {
+          let name = user.displayName || user.email?.split('@')[0] || "Usuario";
+          if (user.isAnonymous) {
+            const savedName = localStorage.getItem('my_saved_anon_display_name');
+            if (savedName) {
+              name = savedName;
+            } else {
+              try {
+                const snap = await getDoc(doc(db, 'users', user.uid));
+                if (snap.exists()) {
+                  name = (snap.data() as UserProfile).displayName;
+                }
+              } catch (e) {
+                console.warn("Could not fetch anonymous username", e);
+              }
+            }
+          }
+
           const profile: UserProfile = {
             uid: user.uid,
-            displayName: user.displayName || user.email?.split('@')[0] || "Usuario",
-            email: user.email || "",
+            displayName: name,
+            email: user.email || `${name.toLowerCase().replace(/\s+/g, '')}_anon@figus.com`,
             createdAt: new Date().toISOString()
           };
           setCurrentUser(profile);
@@ -259,18 +277,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else {
           // If no Auth user, check if we have a locally saved nickname user!
           if (selectedSimUserId && selectedSimUserId.startsWith('user_')) {
-            const matched = users.find(u => u.uid === selectedSimUserId);
+            const list = simGetUsers().filter(u => !isFakeUid(u.uid) && !isFakeUser(u.displayName));
+            const matched = list.find(u => u.uid === selectedSimUserId);
             if (matched) {
               setCurrentUser(matched);
             } else {
-              // Fetch from Firestore directly on startup
-              getDoc(doc(db, 'users', selectedSimUserId)).then(snap => {
-                if (snap.exists()) {
-                  setCurrentUser(snap.data() as UserProfile);
-                } else {
-                  setCurrentUser(null);
-                }
-              }).catch(() => setCurrentUser(null));
+              setCurrentUser(null);
             }
           } else {
             setCurrentUser(null);
@@ -287,11 +299,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setCurrentUser(matched);
       }
     }
-  }, [selectedSimUserId, users]);
+  }, [selectedSimUserId]);
 
   // 2. Fetch Stickers, Trades, Users, and Friend Requests in Realtime
   useEffect(() => {
-    if (isRealFirebase && db) {
+    // Determine dynamically if we can safely listen to live Firebase
+    const isUsingFirebase = !!(isRealFirebase && db && auth?.currentUser);
+
+    if (isUsingFirebase) {
+      console.log("Firebase is active & user is authenticated. Subscribing to database.");
       // Real Firebase data listeners
       const unsubStickers = onSnapshot(collection(db, 'stickers'), (snapshot) => {
         const list: Sticker[] = [];
@@ -302,7 +318,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         });
         setStickers(list);
-      }, (err) => handleFirestoreError(err, OperationType.LIST, 'stickers'));
+      }, (err) => {
+        console.warn("Firestore collection stickers silent check or failed: ", err.message);
+      });
 
       const unsubTrades = onSnapshot(collection(db, 'trades'), (snapshot) => {
         const list: TradeProposal[] = [];
@@ -313,7 +331,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         });
         setTrades(list);
-      }, (err) => handleFirestoreError(err, OperationType.LIST, 'trades'));
+      }, (err) => {
+        console.warn("Firestore collection trades silent check or failed: ", err.message);
+      });
 
       const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
         const list: UserProfile[] = [];
@@ -324,7 +344,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         });
         setUsers(list);
-      }, (err) => handleFirestoreError(err, OperationType.LIST, 'users'));
+      }, (err) => {
+        console.warn("Firestore collection users silent check or failed: ", err.message);
+      });
 
       const unsubFriendRequests = onSnapshot(collection(db, 'friendRequests'), (snapshot) => {
         const list: FriendRequest[] = [];
@@ -335,7 +357,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         });
         setFriendRequests(list);
-      }, (err) => handleFirestoreError(err, OperationType.LIST, 'friendRequests'));
+      }, (err) => {
+        console.warn("Firestore collection friendRequests silent check or failed: ", err.message);
+      });
 
       return () => {
         unsubStickers();
@@ -344,6 +368,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         unsubFriendRequests();
       };
     } else {
+      console.log("No authenticated live user. Using local simulation backend.");
       // Pull simulation data every second or when triggers change
       const syncSim = () => {
         setStickers(simGetStickers().filter(s => !isFakeUid(s.ownerId) && !isFakeUser(s.ownerName)));
@@ -358,7 +383,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const interval = setInterval(syncSim, 1500);
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [currentUser]); // Re-subscribe if login status/currentUser changes
 
   // 3. Realtime Messages Listener for Active Conversation
   useEffect(() => {
@@ -367,7 +392,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (isRealFirebase && db) {
+    const isUsingFirebase = !!(isRealFirebase && db && auth?.currentUser);
+
+    if (isUsingFirebase) {
       const q = query(
         collection(db, `trades/${activeTradeId}/messages`),
         where('createdAt', '!=', '')
@@ -380,7 +407,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Sort message array stream securely by timestamp
         list.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         setCurrentTradeMessages(list);
-      }, (err) => handleFirestoreError(err, OperationType.LIST, `trades/${activeTradeId}/messages`));
+      }, (err) => {
+        console.warn(`Firestore messages failed to load for trade ${activeTradeId}: `, err.message);
+      });
       
       return () => unsubscribe();
     } else {
@@ -392,7 +421,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const interval = setInterval(syncMessages, 1000);
       return () => clearInterval(interval);
     }
-  }, [activeTradeId]);
+  }, [activeTradeId, currentUser]);
 
   // --- ACTIONS ---
 
@@ -410,20 +439,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       email: email,
       createdAt: new Date().toISOString()
     };
-    if (isRealFirebase && db) {
-      // Create user if live and save locally to state
-      setDoc(doc(db, 'users', newUser.uid), newUser)
-        .then(() => {
-          localStorage.setItem('my_saved_sim_user_id', newUser.uid);
-          setSelectedSimUserId(newUser.uid);
-          setCurrentUser(newUser);
-        })
-        .catch((err) => handleFirestoreError(err, OperationType.WRITE, `users/${newUser.uid}`));
-    } else {
-      simAddUser(newUser);
-      localStorage.setItem('my_saved_sim_user_id', newUser.uid);
-      setSelectedSimUserId(newUser.uid);
-    }
+    simAddUser(newUser);
+    localStorage.setItem('my_saved_sim_user_id', newUser.uid);
+    setSelectedSimUserId(newUser.uid);
+    setCurrentUser(newUser);
   };
 
   const loginWithGoogle = async () => {
@@ -458,21 +477,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginAnonymously = async (name: string) => {
+    if (isRealFirebase && auth) {
+      try {
+        console.log("Logging in anonymously for Android WebView / rapid access...");
+        localStorage.setItem('my_saved_anon_display_name', name);
+        const cred = await signInAnonymously(auth);
+        if (cred.user) {
+          const profile: UserProfile = {
+            uid: cred.user.uid,
+            displayName: name,
+            email: `${name.toLowerCase().replace(/\s+/g, '')}_anon@figus.com`,
+            createdAt: new Date().toISOString()
+          };
+          setCurrentUser(profile);
+          const profileRef = doc(db, 'users', cred.user.uid);
+          await setDoc(profileRef, profile, { merge: true });
+          setSelectedSimUserId(cred.user.uid);
+          localStorage.setItem('my_saved_sim_user_id', cred.user.uid);
+        }
+      } catch (err: any) {
+        console.error("signInAnonymously failed, falling back to local simulation:", err);
+        createNewProfile(name, `${name.toLowerCase().replace(/\s+/g, '')}_local@figus.com`);
+      }
+    } else {
+      createNewProfile(name, `${name.toLowerCase().replace(/\s+/g, '')}_local@figus.com`);
+    }
+  };
+
   const logout = async () => {
     if (isRealFirebase && auth) {
       try {
         await signOut(auth);
-        // Clear local storage reference to simulator user if any
-        setSelectedSimUserId("");
-        localStorage.removeItem('my_saved_sim_user_id');
       } catch (err: any) {
         console.error("Logout failed:", err);
       }
-    } else {
-      setSelectedSimUserId("");
-      setCurrentUser(null);
-      localStorage.removeItem('my_saved_sim_user_id');
     }
+    // Fully clear active simulated/local sessions
+    setSelectedSimUserId("");
+    setCurrentUser(null);
+    localStorage.removeItem('my_saved_sim_user_id');
+    localStorage.removeItem('my_saved_anon_display_name');
   };
 
   // Add a sticker to current user's inventory
@@ -772,6 +817,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       removeFriend,
       connectUserByCode,
       loginWithGoogle,
+      loginAnonymously,
       logout
     }}>
       {children}

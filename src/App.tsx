@@ -19,31 +19,15 @@ import AIAssistant from './components/AIAssistant';
 function AppContent() {
   const { 
     currentUser, 
-    createNewProfile,
     isFirebaseActive,
     trades,
     connectionNotification,
-    clearConnectionNotification
+    clearConnectionNotification,
+    logout
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'album' | 'trades'>('album');
   const [showAIChat, setShowAIChat] = useState<boolean>(false);
-
-  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return !isFirebaseActive && !localStorage.getItem('my_saved_sim_user_id');
-    }
-    return false;
-  });
-  const [welcomeName, setWelcomeName] = useState<string>("");
-
-  const handleWelcomeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!welcomeName.trim()) return;
-    const name = welcomeName.trim();
-    createNewProfile(name, `${name.toLowerCase().replace(/\s+/g, '')}@figus.com`);
-    setShowWelcomeModal(false);
-  };
 
   // Count pending or accepted trades where the current user is active to show a badge
   const activeTradeCount = trades.filter(t => 
@@ -134,6 +118,17 @@ function AppContent() {
                   {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : <User className="w-4 h-4" />}
                 </div>
               </div>
+
+              {currentUser && (
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="p-2.5 bg-white/5 hover:bg-rose-950/40 border border-white/5 hover:border-rose-900/30 text-slate-450 hover:text-rose-450 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
+                  title="Log out / Switch identity"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
           </div>
@@ -220,46 +215,6 @@ function AppContent() {
           © {new Date().getFullYear()} FiguSwap 2026. Made as a secure networking space to bring collectors together and help everyone fill their checklist album.
         </p>
       </footer>
-
-      {/* 5. WELCOME POPUP FOR NEW FRIENDS JOINING THE LINK */}
-      {showWelcomeModal && (
-        <div className="fixed inset-0 bg-[#000]/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-brand-panel border-2 border-brand-emerald/35 rounded-3xl w-full max-w-md p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(16,185,129,0.25)] animate-fade-in relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brand-gold via-brand-emerald to-brand-gold"></div>
-            
-            <div className="w-16 h-16 bg-gradient-to-br from-brand-gold to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-[0_0_25px_rgba(251,191,36,0.25)]">
-              <Trophy className="w-8 h-8 text-brand-bg" />
-            </div>
-
-            <h2 className="text-xl sm:text-2xl font-black text-brand-gold tracking-tight italic uppercase mb-2">My Sticker Checklist Dashboard!</h2>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto mb-6">
-              A friend shared this link with you! Record your duplicate and missing stickers to propose secure swaps instantly.
-            </p>
-
-            <form onSubmit={handleWelcomeSubmit} className="space-y-4">
-              <div className="text-left">
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Enter your Name or Nickname:</label>
-                <input
-                  type="text"
-                  required
-                  maxLength={25}
-                  placeholder="E.g., Bruno, Santi, Sofi..."
-                  value={welcomeName}
-                  onChange={(e) => setWelcomeName(e.target.value)}
-                  className="w-full bg-[#0d1f13] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald font-bold placeholder:text-slate-500 placeholder:font-normal"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 px-4 bg-brand-emerald hover:bg-emerald-400 active:scale-[0.98] text-brand-bg font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-[0_4px_15px_rgba(16,185,129,0.3)]"
-              >
-                Start My Album 🚀
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* MOBILE BOTTOM NAVIGATION BAR (for simulated Android app feel) */}
       <nav className="fixed bottom-0 left-0 right-0 bg-brand-panel/95 backdrop-blur-lg border-t border-white/10 py-3.5 px-6 md:hidden z-50 flex justify-around items-center shadow-[0_-5px_25px_rgba(0,0,0,0.6)]" aria-label="Mobile Tabs">
