@@ -65,8 +65,8 @@ interface AppContextType {
   respondToFriendRequest: (requestId: string, status: 'accepted' | 'declined') => void;
   removeFriend: (friendId: string) => void;
   connectUserByCode: (code: string) => Promise<{ success: boolean; displayName?: string; error?: string }>;
-  loginWithGoogle: () => Promise<void>;
-  loginAnonymously: (name: string) => Promise<void>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  loginAnonymously: (name: string) => Promise<{ success: boolean; error?: string; isSimulated?: boolean }>;
   logout: () => Promise<void>;
 }
 
@@ -269,10 +269,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           };
           setCurrentUser(profile);
           
-          // Save real user profile to database
+          // Save real user profile to database (non-blocking, warning only to prevent auth crashes)
           const profileRef = doc(db, 'users', user.uid);
           setDoc(profileRef, profile, { merge: true }).catch(err => {
-            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+            console.warn("Silent non-blocking user profile write warning:", err);
           });
         } else {
           // If no Auth user, check if we have a locally saved nickname user!
@@ -456,25 +456,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.log("Mobile or webview detected. Using signInWithRedirect for Google Auth...");
         try {
           await signInWithRedirect(auth, provider);
+          return { success: true };
         } catch (err: any) {
           console.error("signInWithRedirect failed:", err);
-          handleFirestoreError(err, OperationType.WRITE, "auth/google-redirect");
+          return { success: false, error: err.message || String(err) };
         }
       } else {
         console.log("Desktop device detected. Attempting signInWithPopup...");
         try {
           await signInWithPopup(auth, provider);
+          return { success: true };
         } catch (err: any) {
           console.warn("signInWithPopup failed (possibly blocked), trying redirect:", err);
           try {
             await signInWithRedirect(auth, provider);
+            return { success: true };
           } catch (rErr: any) {
             console.error("signInWithRedirect fallback failed:", rErr);
-            handleFirestoreError(rErr, OperationType.WRITE, "auth/google-login");
+            return { success: false, error: rErr.message || String(rErr) };
           }
         }
       }
     }
+    return { success: false, error: "Firebase no está inicializado o configurado." };
   };
 
   const loginAnonymously = async (name: string) => {
@@ -482,26 +486,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log("Logging in anonymously for Android WebView / rapid access...");
         localStorage.setItem('my_saved_anon_display_name', name);
-        const cred = await signInAnonymously(auth);
-        if (cred.user) {
-          const profile: UserProfile = {
-            uid: cred.user.uid,
-            displayName: name,
-            email: `${name.toLowerCase().replace(/\s+/g, '')}_anon@figus.com`,
-            createdAt: new Date().toISOString()
-          };
-          setCurrentUser(profile);
-          const profileRef = doc(db, 'users', cred.user.uid);
-          await setDoc(profileRef, profile, { merge: true });
-          setSelectedSimUserId(cred.user.uid);
-          localStorage.setItem('my_saved_sim_user_id', cred.user.uid);
-        }
+        
+        // Define an async task with timeout to prevent hangs on cellular networks/WebViews
+        const runAnonAuth = async () => {
+          const cred = await signInAnonymously(auth);
+          if (cred.user) {
+            const profile: UserProfile = {
+              uid: cred.user.uid,
+              displayName: name,
+              email: `${name.toLowerCase().replace(/\s+/g, '')}_anon@figus.com`,
+              createdAt: new Date().toISOString()
+            };
+            setCurrentUser(profile);
+            
+            // Set doc asynchronously, without blocking access
+            const profileRef = doc(db, 'users', cred.user.uid);
+            setDoc(profileRef, profile, { merge: true }).catch(err => {
+              console.warn("Silent profile save warning:", err);
+            });
+            
+            setSelectedSimUserId(cred.user.uid);
+            localStorage.setItem('my_saved_sim_user_id', cred.user.uid);
+            return { success: true };
+          }
+          throw new Error("No credential returned by Firebase.");
+        };
+
+        const timeoutPromise = new Promise<{ success: boolean; isSimulated?: boolean; error?: string }>((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout de conexión con Firebase Auth")), 2500)
+        );
+
+        return await Promise.race([runAnonAuth(), timeoutPromise]);
       } catch (err: any) {
-        console.error("signInAnonymously failed, falling back to local simulation:", err);
+        console.error("signInAnonymously failed or timed out, falling back to local simulation:", err);
+        // Fallback immediately to local profile for a 100% reliable login experience
         createNewProfile(name, `${name.toLowerCase().replace(/\s+/g, '')}_local@figus.com`);
+        return { success: true, isSimulated: true, error: err.message || String(err) };
       }
     } else {
       createNewProfile(name, `${name.toLowerCase().replace(/\s+/g, '')}_local@figus.com`);
+      return { success: true, isSimulated: true };
     }
   };
 

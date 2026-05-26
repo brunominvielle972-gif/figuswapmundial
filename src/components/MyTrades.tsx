@@ -36,6 +36,8 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
   const [messageText, setMessageText] = useState<string>("");
   const [localName, setLocalName] = useState("");
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // New trade proposal state
@@ -128,10 +130,40 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
   }, [currentTradeMessages, activeTradeId]);
 
   if (!currentUser) {
-    const handleAnonymousSubmit = (e: React.FormEvent) => {
+    const handleGoogleLogin = async () => {
+      try {
+        setIsLoggingIn(true);
+        setAuthError(null);
+        const res = await loginWithGoogle();
+        if (!res.success) {
+          setAuthError(res.error || "Ocurrió un error al iniciar sesión con Google.");
+        }
+      } catch (err: any) {
+        console.error("Google Auth error:", err);
+        setAuthError(err.message || String(err));
+      } finally {
+        setIsLoggingIn(false);
+      }
+    };
+
+    const handleAnonymousSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!localName.trim()) return;
-      loginAnonymously(localName.trim());
+      if (!localName.trim() || isLoggingIn) return;
+      try {
+        setIsLoggingIn(true);
+        setAuthError(null);
+        const res = await loginAnonymously(localName.trim());
+        if (res.isSimulated) {
+          setAuthError("Aviso: Iniciaste en Modo Local/Simulado. Para usar el modo online real en tu APK/Celu, recuerda habilitar 'Anonymous sign-in' (Inicio Anónimo) en tu consola de Firebase Auth.");
+        } else if (!res.success) {
+          setAuthError(res.error || "Ocurrió un error al iniciar sesión.");
+        }
+      } catch (err: any) {
+        console.error("Anonymous access error:", err);
+        setAuthError(err.message || String(err));
+      } finally {
+        setIsLoggingIn(false);
+      }
     };
 
     return (
@@ -143,13 +175,21 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
         </p>
 
         <div className="w-full max-w-md bg-[#0a180f] p-6 rounded-2xl border border-brand-emerald/20 shadow-inner space-y-6">
+          {authError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-left text-xs text-red-300 leading-relaxed font-semibold">
+              <span className="block text-[10px] font-black uppercase text-red-400 mb-1">Aviso sobre Conexión Auth:</span>
+              {authError}
+            </div>
+          )}
+
           {/* Opción A: Google Auth */}
-          {isFirebaseActive ? (
+          {isFirebaseActive && (
             <div className="space-y-2">
               <span className="block text-[10px] font-black uppercase text-slate-500 tracking-widest text-left mb-1">Opción A: Sesión con Google (Web)</span>
               <button
-                onClick={loginWithGoogle}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200"
+                onClick={handleGoogleLogin}
+                disabled={isLoggingIn}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200 disabled:opacity-50"
               >
                 <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
                   <g transform="matrix(1, 0, 0, 1, 0, 0)">
@@ -159,11 +199,9 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
                     <path d="M12,6.94c1.3,0 2.48,0.45 3.4,1.33l2.55,-2.55C16.4,4.35 14.41,3.54 12,3.54c-4.58,0 -7.62,1.78 -9.1,4.72l4.14,2.58c0.7,-2.1 2.65,-3.66 4.96,-3.66z" fill="#EA4335" />
                   </g>
                 </svg>
-                Iniciar Sesión con Google
+                {isLoggingIn ? "Conectando..." : "Iniciar Sesión con Google"}
               </button>
             </div>
-          ) : (
-            <div className="text-[11px] text-amber-500 mb-3 font-semibold font-mono">Modo Simulador Activo</div>
           )}
 
           <div className="flex items-center">
@@ -190,9 +228,10 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
               />
               <button
                 type="submit"
-                className="w-full py-3 px-4 bg-brand-emerald hover:bg-emerald-400 text-brand-bg font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)] border border-transparent"
+                disabled={isLoggingIn}
+                className="w-full py-3 px-4 bg-brand-emerald hover:bg-emerald-400 text-brand-bg font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)] border border-transparent disabled:opacity-50"
               >
-                ⚽ Entrar Online al Instante 🚀
+                {isLoggingIn ? "Conectando..." : "⚽ Entrar Online al Instante 🚀"}
               </button>
             </form>
           </div>

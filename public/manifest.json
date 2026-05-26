@@ -1,0 +1,10 @@
+{
+  "short_name": "FiguSwap",
+  "name": "FiguSwap Mundial",
+  "description": "Intercambia tus figuritas del mundial online",
+  "start_url": "/",
+  "background_color": "#060f0a",
+  "theme_color": "#10b981",
+  "display": "standalone",
+  "orientation": "portrait"
+}
