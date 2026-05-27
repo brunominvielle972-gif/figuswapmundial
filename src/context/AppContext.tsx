@@ -55,8 +55,8 @@ interface AppContextType {
   clearConnectionNotification: () => void;
   switchSimUser: (userId: string) => void;
   createNewProfile: (name: string, email: string) => void;
-  addSticker: (sticker: Omit<Sticker, 'id' | 'ownerId' | 'ownerName' | 'updatedAt'>) => void;
-  removeSticker: (stickerId: string) => void;
+  addSticker: (sticker: Omit<Sticker, 'id' | 'ownerId' | 'ownerName' | 'updatedAt'>) => Promise<{ success: boolean; error?: string }>;
+  removeSticker: (stickerId: string) => Promise<{ success: boolean; error?: string }>;
   proposeTrade: (receiverId: string, receiverName: string, offeredIds: string[], requestedIds: string[]) => string;
   respondToTrade: (tradeId: string, response: 'accepted' | 'rejected' | 'completed' | 'cancelled') => void;
   sendChatMessage: (tradeId: string, text: string) => void;
@@ -313,7 +313,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const list: Sticker[] = [];
         snapshot.forEach((doc) => {
           const d = doc.data() as Sticker;
-          if (!isFakeUid(d.ownerId) && !isFakeUser(d.ownerName)) {
+          const isMySticker = currentUser && d.ownerId === currentUser.uid;
+          if (isMySticker || (!isFakeUid(d.ownerId) && !isFakeUser(d.ownerName))) {
             list.push({ id: doc.id, ...d } as Sticker);
           }
         });
@@ -326,7 +327,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const list: TradeProposal[] = [];
         snapshot.forEach((doc) => {
           const d = doc.data() as TradeProposal;
-          if (!isFakeUid(d.proposerId) && !isFakeUid(d.receiverId)) {
+          const isMyTrade = currentUser && (d.proposerId === currentUser.uid || d.receiverId === currentUser.uid);
+          if (isMyTrade || (!isFakeUid(d.proposerId) && !isFakeUid(d.receiverId))) {
             list.push({ id: doc.id, ...d } as TradeProposal);
           }
         });
@@ -339,7 +341,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const list: UserProfile[] = [];
         snapshot.forEach((doc) => {
           const d = doc.data() as UserProfile;
-          if (!isFakeUid(d.uid) && !isFakeUser(d.displayName)) {
+          const isMe = currentUser && d.uid === currentUser.uid;
+          if (isMe || (!isFakeUid(d.uid) && !isFakeUser(d.displayName))) {
             list.push(d);
           }
         });
@@ -352,7 +355,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const list: FriendRequest[] = [];
         snapshot.forEach((doc) => {
           const d = doc.data() as FriendRequest;
-          if (!isFakeUid(d.senderId) && !isFakeUid(d.receiverId)) {
+          const isMyRequest = currentUser && (d.senderId === currentUser.uid || d.receiverId === currentUser.uid);
+          if (isMyRequest || (!isFakeUid(d.senderId) && !isFakeUid(d.receiverId))) {
             list.push({ id: doc.id, ...d } as FriendRequest);
           }
         });
@@ -371,9 +375,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.log("No authenticated live user. Using local simulation backend.");
       // Pull simulation data every second or when triggers change
       const syncSim = () => {
-        setStickers(simGetStickers().filter(s => !isFakeUid(s.ownerId) && !isFakeUser(s.ownerName)));
-        setTrades(simGetTrades().filter(t => !isFakeUid(t.proposerId) && !isFakeUid(t.receiverId)));
-        setUsers(simGetUsers().filter(u => !isFakeUid(u.uid) && !isFakeUser(u.displayName)));
+        const currentUid = currentUser?.uid;
+        setStickers(simGetStickers().filter(s => 
+          (currentUid && s.ownerId === currentUid) || 
+          (!isFakeUid(s.ownerId) && !isFakeUser(s.ownerName))
+        ));
+        setTrades(simGetTrades().filter(t => 
+          (currentUid && (t.proposerId === currentUid || t.receiverId === currentUid)) ||
+          (!isFakeUid(t.proposerId) && !isFakeUid(t.receiverId))
+        ));
+        setUsers(simGetUsers().filter(u => 
+          (currentUid && u.uid === currentUid) ||
+          (!isFakeUid(u.uid) && !isFakeUser(u.displayName))
+        ));
 
         const existingRequests = JSON.parse(localStorage.getItem('sticker_friend_requests') || '[]');
         setFriendRequests(existingRequests);
@@ -545,32 +559,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Add a sticker to current user's inventory
-  const addSticker = (stickerData: Omit<Sticker, 'id' | 'ownerId' | 'ownerName' | 'updatedAt'>) => {
-    if (!currentUser) return;
+  const addSticker = async (stickerData: Omit<Sticker, 'id' | 'ownerId' | 'ownerName' | 'updatedAt'>): Promise<{ success: boolean; error?: string }> => {
+    if (!currentUser) return { success: false, error: "No has iniciado sesión." };
     const stickerId = `${currentUser.uid}_${stickerData.code}_${stickerData.type}`;
     const newSticker: Sticker = {
       ...stickerData,
       id: stickerId,
       ownerId: currentUser.uid,
-      ownerName: currentUser.displayName,
+      ownerName: currentUser.displayName || "Coleccionador",
       updatedAt: new Date().toISOString()
     };
 
-    if (isRealFirebase && db) {
-      setDoc(doc(db, 'stickers', stickerId), newSticker)
-        .catch(err => handleFirestoreError(err, OperationType.WRITE, `stickers/${stickerId}`));
+    if (isRealFirebase && db && auth?.currentUser) {
+      try {
+        await setDoc(doc(db, 'stickers', stickerId), newSticker);
+        return { success: true };
+      } catch (err: any) {
+        handleFirestoreError(err, OperationType.WRITE, `stickers/${stickerId}`);
+        return { success: false, error: err?.message || "Error al escribir en Firestore." };
+      }
     } else {
       simSaveSticker(newSticker);
+      return { success: true };
     }
   };
 
   // Remove a sticker from the inventory
-  const removeSticker = (stickerId: string) => {
-    if (isRealFirebase && db) {
-      deleteDoc(doc(db, 'stickers', stickerId))
-        .catch(err => handleFirestoreError(err, OperationType.DELETE, `stickers/${stickerId}`));
+  const removeSticker = async (stickerId: string): Promise<{ success: boolean; error?: string }> => {
+    if (isRealFirebase && db && auth?.currentUser) {
+      try {
+        await deleteDoc(doc(db, 'stickers', stickerId));
+        return { success: true };
+      } catch (err: any) {
+        handleFirestoreError(err, OperationType.DELETE, `stickers/${stickerId}`);
+        return { success: false, error: err?.message || "Error al eliminar de Firestore." };
+      }
     } else {
       simDeleteSticker(stickerId);
+      return { success: true };
     }
   };
 
@@ -581,7 +607,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newTrade: TradeProposal = {
       id: tradeId,
       proposerId: currentUser.uid,
-      proposerName: currentUser.displayName,
+      proposerName: currentUser.displayName || "Coleccionador",
       receiverId: receiverId,
       receiverName: receiverName,
       offeredStickers: offeredIds,

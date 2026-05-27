@@ -11,13 +11,13 @@ export default function AIAssistant() {
   const { currentUser } = useApp();
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sticker_ai_chat");
+      const saved = localStorage.getItem("figuswap_ai_chat_v5");
       if (saved) return JSON.parse(saved);
     }
     return [
       {
         role: "model",
-        text: "Hello there, champion! ⚽ I am **FiguSwap Expert AI**, your virtual sticker trading assistant. Ask me how to negotiate with your buddies for those hard-to-find shinies, or request a pro soccer-style trading strategy. What can I help you find today, star?"
+        text: "Hello champ! ⚽ I'm **FiguSwap Expert AI**, your virtual assistant for sticker trading. Ask me how to negotiate with your friends for those hard-to-find shinies, or ask me for a pro swap strategy. Which sticker are you hunting today, crack?"
       }
     ];
   });
@@ -29,7 +29,7 @@ export default function AIAssistant() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("sticker_ai_chat", JSON.stringify(messages));
+      localStorage.setItem("figuswap_ai_chat_v5", JSON.stringify(messages));
     }
   }, [messages]);
 
@@ -45,7 +45,7 @@ export default function AIAssistant() {
       setInput("");
     }
 
-    // Intercept client chat deletion request phrases
+    // Intercept client chat deletion request phrases in Spanish and English
     const promptLower = promptToSend.toLowerCase();
     if (
       promptLower.includes("clear chat") || 
@@ -53,7 +53,10 @@ export default function AIAssistant() {
       promptLower.includes("delete chat") || 
       promptLower.includes("wipe chat") || 
       promptLower.includes("erase chat") ||
-      promptLower.includes("empty chat")
+      promptLower.includes("empty chat") ||
+      promptLower.includes("borrar chat") ||
+      promptLower.includes("limpiar chat") ||
+      promptLower.includes("reiniciar chat")
     ) {
       const newUserMessage: Message = { role: "user", text: promptToSend };
       setMessages((prev) => [...prev, newUserMessage]);
@@ -62,7 +65,7 @@ export default function AIAssistant() {
         const reset: Message[] = [
           {
             role: "model",
-            text: "All done! 🧹 I have cleared our entire chat history as requested. Tell me, is there anything else I can assist you with regarding your sticker collection?"
+            text: "All clear! 🧹 I have wiped our entire conversation history. Tell me, is there anything else I can help you with regarding your album or stickers?"
           }
         ];
         setMessages(reset);
@@ -98,14 +101,14 @@ export default function AIAssistant() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error connecting to the soccer stands");
+        throw new Error(errorData.error || "Failed to connect to the assistant");
       }
 
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "model", text: data.text }]);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err?.message || "Could not connect to the server. Please check your network connection.");
+      setErrorMsg(err?.message || "Failed to reach the server. Please check your internet connection.");
     } finally {
       setIsLoading(false);
     }
@@ -131,16 +134,16 @@ export default function AIAssistant() {
 
   const QUICK_PROMPTS = [
     {
-      label: "📲 Funny WhatsApp Message ideas",
-      prompt: "Write a fun, soccer-themed, engaging message to send to a friend via WhatsApp, jokingly demanding they give me a rare duplicate sticker they have in exchange for some of my common ones. Keep the tone friendly and humorous."
+      label: "📲 Fun ideas to send on WhatsApp",
+      prompt: "Draft a super fun, clever, and soccer-loving message to send to a friend via WhatsApp, jokingly demanding they trade me that hard-to-find shiny they have duplicated in exchange for some of my common ones. Keep it funny and friendly."
     },
     {
-      label: "🏆 What are the absolute rarest stickers?",
-      prompt: "What are historically the most difficult and rarest stickers to get in Panini World Cup albums? Are there special holographic shiny stickers, or legendary key players? Suggest a clever tactic to complete the album."
+      label: "🏆 Which stickers are historically the hardest to find?",
+      prompt: "Historically, which stickers and holograms are the hardest to get in Panini World Cup albums? Suggest clever tactics to negotiate for them."
     },
     {
-      label: "⚽ How to trade for a Shiny sticker?",
-      prompt: "Give me 3 top-tier sticker trading tips to land shiny holographic stickers or rare player cards in exchange for common ones without losing out."
+      label: "⚽ How to trade a shiny sticker without losing out?",
+      prompt: "Give me 3 key tips to successfully and fairly swap shiny stickers or rare players for common ones without getting get the short end of the stick."
     }
   ];
 
@@ -161,7 +164,7 @@ export default function AIAssistant() {
           type="button"
           onClick={clearChat}
           className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-rose-400 rounded-lg transition-all cursor-pointer"
-          title="Borrar historial"
+          title="Clear chat history"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -208,7 +211,7 @@ export default function AIAssistant() {
         {isLoading && (
           <div className="flex flex-col max-w-[80%] self-start mr-auto items-start">
             <span className="text-[9px] text-brand-emerald font-mono uppercase mb-0.5 tracking-wider font-bold animate-pulse">
-              ⚽ Analyzing strategy...
+              ⚽ Analyzing tactics...
             </span>
             <div className="bg-slate-900 border border-brand-emerald/20 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.05)]">
               <span className="w-1.5 h-1.5 bg-brand-emerald rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
@@ -230,7 +233,7 @@ export default function AIAssistant() {
       {messages.length <= 2 && !isLoading && (
         <div className="px-4 py-2 border-t border-white/5 bg-[#070c14] flex flex-col gap-1.5">
           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-            <HelpCircle className="w-3 h-3 text-brand-gold" /> One-click template helper queries:
+            <HelpCircle className="w-3 h-3 text-brand-gold" /> Recommended quick queries:
           </span>
           <div className="flex flex-col gap-1">
             {QUICK_PROMPTS.map((qp, id) => (
@@ -255,7 +258,7 @@ export default function AIAssistant() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder="Ask the tactical soccer trading expert..."
+          placeholder="Ask the tactical trade expert..."
           className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald resize-none scrollbar-none"
           disabled={isLoading}
         />

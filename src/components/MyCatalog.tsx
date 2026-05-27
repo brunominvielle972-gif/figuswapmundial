@@ -31,6 +31,16 @@ export default function MyCatalog() {
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // Success and failure user feedback notifications
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 3500);
+  };
+
   if (!currentUser) {
     const handleGoogleLogin = async () => {
       try {
@@ -193,6 +203,12 @@ export default function MyCatalog() {
       type: stickerType,
       isShiny: false,
       quantity: stickerType === 'repetida' ? quantity : 1
+    }).then(res => {
+      if (res.success) {
+        showToast('success', `¡Figurita ${finalCode} guardada como ${stickerType === 'repetida' ? 'REPETIDA' : 'FALTANTE'}!`);
+      } else {
+        showToast('error', `Error al guardar: ${res.error || 'Intente nuevamente'}`);
+      }
     });
 
     // Increment number automatically for fast loading
@@ -215,7 +231,13 @@ export default function MyCatalog() {
 
     if (type === 'remove') {
       if (existing) {
-        removeSticker(existing.id);
+        removeSticker(existing.id).then(res => {
+          if (res.success) {
+            showToast('success', `¡Figurita ${activeQuickEdit.code} eliminada de tu colección!`);
+          } else {
+            showToast('error', `Error al eliminar: ${res.error || 'Intente de nuevo'}`);
+          }
+        });
       }
     } else {
       addSticker({
@@ -225,6 +247,12 @@ export default function MyCatalog() {
         type: type,
         isShiny: false,
         quantity: type === 'repetida' ? 1 : 1
+      }).then(res => {
+        if (res.success) {
+          showToast('success', `¡Figurita ${activeQuickEdit.code} guardada como ${type === 'repetida' ? 'REPETIDA' : 'FALTANTE'}!`);
+        } else {
+          showToast('error', `Error al guardar: ${res.error || 'Intente de nuevo'}`);
+        }
       });
     }
 
@@ -232,7 +260,26 @@ export default function MyCatalog() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in" id="my-catalog-view">
+    <div className="space-y-8 animate-fade-in relative" id="my-catalog-view">
+      
+      {/* Toast Feedback Alert Banner */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl shadow-2xl border text-xs font-bold space-x-2.5 flex items-center backdrop-blur-md ${
+              toast.type === 'success' 
+                ? 'bg-[#0b1c11]/90 border-brand-emerald/40 text-brand-emerald' 
+                : 'bg-[#1c080b]/90 border-rose-500/40 text-rose-400'
+            }`}
+          >
+            <span className="shrink-0 font-bold">{toast.type === 'success' ? '⚽' : '⚠️'}</span>
+            <span>{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* HEADER SECTION - Explaining Tablilla de Control */}
       <div className="p-6 bg-gradient-to-r from-[#0d1f13] to-[#040c06] rounded-2xl border border-brand-emerald/20 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">

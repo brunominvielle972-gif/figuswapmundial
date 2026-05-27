@@ -34,11 +34,13 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
     friendRequests, 
     sendFriendRequest, 
     respondToFriendRequest,
-    trades
+    trades,
+    removeSticker
   } = useApp();
 
   const [selectedCountry, setSelectedCountry] = useState<string>("All");
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [activeListingTab, setActiveListingTab] = useState<'friends' | 'mine'>('friends');
 
   // State to manage trade proposal drawer/inputs
   const [proposingToUser, setProposingToUser] = useState<{ id: string; name: string } | null>(null);
@@ -66,22 +68,40 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
     );
   };
 
-  // Find other users' stickers checking they're "repetidas" (available to trade)
-  const othersOffers = stickers.filter(s => s.ownerId !== currentUser.uid && s.type === 'repetida');
+  // Find other users' stickers checking they're "repetidas" (available to trade) and belonging strictly to accepted friends
+  const othersOffers = stickers.filter(s => {
+    if (s.ownerId === currentUser.uid) return false;
+    if (s.type !== 'repetida') return false;
+    
+    // Check if the owner is an accepted friend
+    const fStatus = getFriendship(s.ownerId);
+    return fStatus && fStatus.status === 'accepted';
+  });
+
+  // My offers (repetitive stickers) to show in the "Mis Ofertas" sub-tab
+  const myOffers = stickers.filter(s => s.ownerId === currentUser.uid && s.type === 'repetida');
   
   // My stickers to use for trade matching
   const myStickers = stickers.filter(s => s.ownerId === currentUser.uid);
   const myNeeded = myStickers.filter(s => s.type === 'faltante');
   const myRepeated = myStickers.filter(s => s.type === 'repetida');
 
-  // Filter listings by country (avoiding complex code search per user feedback)
+  // Filter listings by country
   const filteredOffers = othersOffers.filter(s => {
     const matchesCountry = selectedCountry === "All" || s.country === selectedCountry;
     return matchesCountry;
   });
 
-  // Get unique list of countries from other users' offers for filter
-  const existingCountries = Array.from(new Set(othersOffers.map(s => s.country)));
+  const filteredMyOffers = myOffers.filter(s => {
+    const matchesCountry = selectedCountry === "All" || s.country === selectedCountry;
+    return matchesCountry;
+  });
+
+  // Get unique list of countries from both sets for robust filtering options
+  const existingCountries = Array.from(new Set([
+    ...othersOffers.map(s => s.country),
+    ...myOffers.map(s => s.country)
+  ]));
 
   // Identify Intelligent Trade Matches (Coincidencias de Intercambio)
   // An offering user has what I NEED because I have those codes declared in myNeeded
@@ -449,67 +469,161 @@ export default function TradeHub({ onNavigateToTrades }: { onNavigateToTrades: (
           </AnimatePresence>
         </div>
 
-        {/* Listings Grid */}
-        {filteredOffers.length === 0 ? (
-          <div className="py-16 text-center text-slate-500 text-xs">
-            No duplicate stickers listed right now.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="community-offers-grid">
-            {filteredOffers.map(offer => {
-              const flagCode = COUNTRY_FLAG_MAP[offer.country] || "un";
+        {/* Sub-tab Selectors: Amigos vs Mis Ofertas */}
+        <div className="flex flex-wrap gap-2.5 mb-6 border-b border-white/5 pb-4">
+          <button
+            type="button"
+            onClick={() => setActiveListingTab('friends')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 border cursor-pointer ${
+              activeListingTab === 'friends'
+                ? 'bg-brand-emerald text-brand-bg border-brand-emerald shadow-[0_4px_15px_rgba(16,185,129,0.2)]'
+                : 'bg-white/5 text-slate-400 border-white/5 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            🤝 Ofertas de mis Amigos ({filteredOffers.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveListingTab('mine')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 border cursor-pointer ${
+              activeListingTab === 'mine'
+                ? 'bg-brand-emerald text-brand-bg border-brand-emerald shadow-[0_4px_15px_rgba(16,185,129,0.2)]'
+                : 'bg-white/5 text-slate-400 border-white/5 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            📋 Mis Ofertas para Amigos ({filteredMyOffers.length})
+          </button>
+        </div>
 
-              return (
-                <div 
-                  key={offer.id} 
-                  className="relative w-full h-44 rounded-xl bg-brand-bg border border-white/10 flex flex-col justify-between p-4 text-left transition-all hover:border-brand-emerald/45 hover:shadow-2xl shadow-lg"
-                >
-                  <div className="flex justify-between items-start">
-                    <img 
-                      src={`https://flagcdn.com/w80/${flagCode}.png`} 
-                      alt={offer.country} 
-                      referrerPolicy="no-referrer"
-                      className="w-10 h-7 object-cover rounded shadow border border-white/10" 
-                    />
-                    
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="text-[9px] font-black uppercase text-brand-emerald bg-brand-emerald/10 border border-brand-emerald/30 px-2.5 py-1 rounded shadow">
-                        @{offer.ownerName}
-                      </span>
-                      {renderMiniFriendshipButton(offer.ownerId, offer.ownerName)}
-                    </div>
-                  </div>
-                  
-                  {/* Info & CTA */}
-                  <div className="w-full">
-                    <div className="flex items-center gap-1.5 justify-between">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-mono text-xs font-black text-white bg-[#030704]/90 border border-white/15 px-1.5 py-0.5 rounded shadow-sm">
-                          {offer.code}
+        {/* Listings Grid */}
+        {activeListingTab === 'friends' ? (
+          filteredOffers.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-xs px-4 space-y-3 bg-[#030704]/40 border border-white/5 rounded-2xl" id="empty-marketplace-feedback">
+              <p className="font-bold text-slate-300">⚽ No hay ofertas disponibles de tus amigos conectados en este momento.</p>
+              <p className="text-slate-500 text-[11px] max-w-md mx-auto leading-relaxed font-semibold">
+                Las ofertas de esta sección son 100% privadas y provienen únicamente de los compañeros que tienes agregados como amigos en tu círculo.
+                ¡Compárteles tu código de invitación para que se conecten, o ingresa su código arriba para habilitar sus figuritas repetidas!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="community-offers-grid">
+              {filteredOffers.map(offer => {
+                const flagCode = COUNTRY_FLAG_MAP[offer.country] || "un";
+
+                return (
+                  <div 
+                    key={offer.id} 
+                    className="relative w-full h-44 rounded-xl bg-brand-bg border border-white/10 flex flex-col justify-between p-4 text-left transition-all hover:border-brand-emerald/45 hover:shadow-2xl shadow-lg"
+                  >
+                    <div className="flex justify-between items-start">
+                      <img 
+                        src={`https://flagcdn.com/w80/${flagCode}.png`} 
+                        alt={offer.country} 
+                        referrerPolicy="no-referrer"
+                        className="w-10 h-7 object-cover rounded shadow border border-white/10" 
+                      />
+                      
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="text-[9px] font-black uppercase text-brand-emerald bg-brand-emerald/10 border border-brand-emerald/30 px-2.5 py-1 rounded shadow">
+                          @{offer.ownerName}
                         </span>
-                        {offer.quantity > 1 && (
-                          <span className="text-[8px] font-mono bg-white/5 text-slate-300 border border-white/5 px-1.5 py-0.5 rounded font-black uppercase">
-                            x{offer.quantity}
-                          </span>
-                        )}
+                        {renderMiniFriendshipButton(offer.ownerId, offer.ownerName)}
                       </div>
                     </div>
                     
-                    <h4 className="font-extrabold text-white text-[11px] mt-2 uppercase tracking-wide leading-none">{offer.country}</h4>
-                    <p className="text-[9px] text-slate-400 mt-1">Sticker {offer.code}</p>
+                    {/* Info & CTA */}
+                    <div className="w-full">
+                      <div className="flex items-center gap-1.5 justify-between">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-xs font-black text-white bg-[#030704]/90 border border-white/15 px-1.5 py-0.5 rounded shadow-sm">
+                            {offer.code}
+                          </span>
+                          {offer.quantity > 1 && (
+                            <span className="text-[8px] font-mono bg-white/5 text-slate-300 border border-white/5 px-1.5 py-0.5 rounded font-black uppercase">
+                              x{offer.quantity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <h4 className="font-extrabold text-white text-[11px] mt-2 uppercase tracking-wide leading-none">{offer.country}</h4>
+                      <p className="text-[9px] text-slate-400 mt-1">Sticker {offer.code}</p>
 
-                    <button
-                      type="button"
-                      onClick={() => startProproposal(offer.ownerId, offer.ownerName, offer.code)}
-                      className="mt-2.5 w-full py-1.5 bg-[#0d1f13] hover:bg-brand-emerald text-brand-emerald hover:text-[#050a06] border border-brand-emerald/30 hover:border-transparent font-black uppercase text-[10px] tracking-wider rounded-lg transition-all cursor-pointer"
-                    >
-                      Propose Swap
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => startProproposal(offer.ownerId, offer.ownerName, offer.code)}
+                        className="mt-2.5 w-full py-1.5 bg-[#0d1f13] hover:bg-brand-emerald text-brand-emerald hover:text-[#050a06] border border-brand-emerald/30 hover:border-transparent font-black uppercase text-[10px] tracking-wider rounded-lg transition-all cursor-pointer"
+                      >
+                        Propose Swap
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          filteredMyOffers.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-xs px-4 space-y-3 bg-[#030704]/40 border border-white/5 rounded-2xl" id="empty-my-offers-feedback">
+              <p className="font-bold text-slate-300">📋 No tienes ninguna figurita tuya registrada como repetida para esta selección.</p>
+              <p className="text-slate-500 text-[11px] max-w-sm mx-auto leading-relaxed font-semibold">
+                Anímate a marcar en la pestaña de **"Mi Tablilla"** las figuritas que tienes repetidas (en color verde). ¡Aparecerán aquí al instante para tus amigos agregados!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="my-offers-grid">
+              {filteredMyOffers.map(offer => {
+                const flagCode = COUNTRY_FLAG_MAP[offer.country] || "un";
+
+                return (
+                  <div 
+                    key={offer.id} 
+                    className="relative w-full h-44 rounded-xl bg-[#09150e]/95 border border-brand-emerald/25 flex flex-col justify-between p-4 text-left shadow-lg hover:border-brand-emerald/40 transition-all"
+                  >
+                    <div className="flex justify-between items-start">
+                      <img 
+                        src={`https://flagcdn.com/w80/${flagCode}.png`} 
+                        alt={offer.country} 
+                        referrerPolicy="no-referrer"
+                        className="w-10 h-7 object-cover rounded shadow border border-white/10" 
+                      />
+                      
+                      <span className="text-[9px] font-black uppercase text-brand-emerald bg-brand-emerald/10 border border-brand-emerald/30 px-2.5 py-1 rounded shadow">
+                        Mía / Repetida
+                      </span>
+                    </div>
+                    
+                    {/* Info & CTA */}
+                    <div className="w-full">
+                      <div className="flex items-center gap-1.5 justify-between">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-xs font-black text-white bg-slate-950 border border-white/15 px-1.5 py-0.5 rounded shadow-sm">
+                            {offer.code}
+                          </span>
+                          {offer.quantity > 1 && (
+                            <span className="text-[8px] font-mono bg-white/5 text-slate-300 border border-white/5 px-1.5 py-0.5 rounded font-black uppercase">
+                              x{offer.quantity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <h4 className="font-extrabold text-white text-[11px] mt-2 uppercase tracking-wide leading-none">{offer.country}</h4>
+                      <p className="text-[9px] text-slate-400 mt-1">Sticker {offer.code}</p>
+
+                      <button
+                        type="button"
+                        onClick={() => removeSticker(offer.id)}
+                        className="mt-2.5 w-full py-1.5 bg-[#1f0d0e] hover:bg-rose-500 hover:text-white text-rose-400 border border-rose-950 hover:border-transparent font-black uppercase text-[10px] tracking-wider rounded-lg transition-all cursor-pointer"
+                      >
+                        Eliminar Oferta
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
 

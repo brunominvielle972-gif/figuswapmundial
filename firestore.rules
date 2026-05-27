@@ -45,13 +45,13 @@ service cloud.firestore {
       allow create: if isSignedIn() 
         && incoming().ownerId == request.auth.uid 
         && isValidSticker(incoming())
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt is string;
         
       allow update: if isSignedIn() 
         && existing().ownerId == request.auth.uid 
         && incoming().ownerId == request.auth.uid 
         && isValidSticker(incoming())
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt is string;
 
       allow delete: if isSignedIn() 
         && existing().ownerId == request.auth.uid;
@@ -59,13 +59,13 @@ service cloud.firestore {
 
     function isValidSticker(data) {
       return data.keys().hasAll(['ownerId', 'ownerName', 'code', 'playerName', 'country', 'type', 'isShiny', 'quantity', 'updatedAt'])
-        && data.keys().size() == 9
+        && (data.keys().size() == 9 || (data.keys().size() == 10 && 'id' in data))
         && data.code is string && data.code.size() <= 10
         && data.playerName is string && data.playerName.size() <= 80
         && data.country is string && data.country.size() <= 50
         && (data.type == 'repetida' || data.type == 'faltante')
         && data.isShiny is bool
-        && data.quantity is int && data.quantity >= 1 && data.quantity <= 100;
+        && (data.quantity is int || data.quantity is float) && data.quantity >= 1 && data.quantity <= 100;
     }
 
     // --- TRADE AGREEMENTS SECURING ---
@@ -76,7 +76,7 @@ service cloud.firestore {
         && incoming().proposerId == request.auth.uid 
         && isValidTrade(incoming())
         && incoming().status == 'pending'
-        && incoming().createdAt == request.time;
+        && incoming().createdAt is string;
 
       // Tiered Identity Logic for Updating Trades
       allow update: if isSignedIn() 
@@ -90,7 +90,7 @@ service cloud.firestore {
           // Action 2: Either party completes or cancels the trade (Terminal lock transition)
           (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
         )
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt is string;
     }
 
     function isValidTrade(data) {
