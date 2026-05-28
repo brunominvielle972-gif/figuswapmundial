@@ -30,7 +30,8 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
     connectUserByCode,
     loginWithGoogle,
     loginAnonymously,
-    isFirebaseActive
+    isFirebaseActive,
+    isCapacitor
   } = useApp();
 
   const [messageText, setMessageText] = useState<string>("");
@@ -185,22 +186,34 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
           {/* Opción A: Google Auth */}
           {isFirebaseActive && (
             <div className="space-y-2">
-              <span className="block text-[10px] font-black uppercase text-slate-500 tracking-widest text-left mb-1">Opción A: Sesión con Google (Web)</span>
-              <button
-                onClick={handleGoogleLogin}
-                disabled={isLoggingIn}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200 disabled:opacity-50"
-              >
-                <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-                  <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                    <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.4C21.68,11.75 21.56,11.4 21.35,11.1z" fill="#4285F4" />
-                    <path d="M12,20.82c2.4,0 4.41,-0.8 5.88,-2.16l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.26,-1.56 -4.96,-3.66H2.9V16.1C4.38,19.04 7.42,20.82 12,20.82z" fill="#34A853" />
-                    <path d="M7.04,13.4a5.3,5.3,0,0,1,0,-3.38V7.44H2.9a10,10,0,0,0,0,8.54l4.14,-2.58z" fill="#FBBC05" />
-                    <path d="M12,6.94c1.3,0 2.48,0.45 3.4,1.33l2.55,-2.55C16.4,4.35 14.41,3.54 12,3.54c-4.58,0 -7.62,1.78 -9.1,4.72l4.14,2.58c0.7,-2.1 2.65,-3.66 4.96,-3.66z" fill="#EA4335" />
-                  </g>
-                </svg>
-                {isLoggingIn ? "Conectando..." : "Iniciar Sesión con Google"}
-              </button>
+              <span className="block text-[10px] font-black uppercase text-slate-500 tracking-widest text-left mb-1">
+                Opción A: Sesión con Google {isCapacitor ? "⚠️ (No disponible en el APK)" : "(Web)"}
+              </span>
+              {isCapacitor ? (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-left text-xs text-amber-200 leading-relaxed font-semibold">
+                  <p className="mb-1 text-amber-400">⚠️ Limitación de Seguridad de Google:</p>
+                  Google bloquea el inicio de sesión web tradicional dentro de aplicaciones APK independientes (WebViews). 
+                  <span className="block mt-1.5 text-[10px] text-slate-400 font-normal">
+                    💡 Por favor, utiliza la <strong>Opción B (Ingresar con Apodo)</strong> de abajo. ¡Funciona al 100% online en el celular para intercambiar figuritas!
+                  </span>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoggingIn}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200 disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                      <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.4C21.68,11.75 21.56,11.4 21.35,11.1z" fill="#4285F4" />
+                      <path d="M12,20.82c2.4,0 4.41,-0.8 5.88,-2.16l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.26,-1.56 -4.96,-3.66H2.9V16.1C4.38,19.04 7.42,20.82 12,20.82z" fill="#34A853" />
+                      <path d="M7.04,13.4a5.3,5.3,0,0,1,0,-3.38V7.44H2.9a10,10,0,0,0,0,8.54l4.14,-2.58z" fill="#FBBC05" />
+                      <path d="M12,6.94c1.3,0 2.48,0.45 3.4,1.33l2.55,-2.55C16.4,4.35 14.41,3.54 12,3.54c-4.58,0 -7.62,1.78 -9.1,4.72l4.14,2.58c0.7,-2.1 2.65,-3.66 4.96,-3.66z" fill="#EA4335" />
+                    </g>
+                  </svg>
+                  {isLoggingIn ? "Conectando..." : "Iniciar Sesión con Google"}
+                </button>
+              )}
             </div>
           )}
 
@@ -212,9 +225,13 @@ export default function MyTrades({ onNavigateToFriends }: MyTradesProps) {
 
           {/* Opción B: Anonymous Online Access */}
           <div className="space-y-3">
-            <span className="block text-[10px] font-black uppercase text-brand-emerald tracking-widest text-left">Opción B: Acceso Rápido (Recomendado APK / Celular)</span>
+            <span className="block text-[10px] font-black uppercase text-brand-emerald tracking-widest text-left">
+              {isCapacitor ? "⚽ Acceso Directo con Apodo (Recomendado)" : "Opción B: Acceso Rápido (Recomendado APK / Celular)"}
+            </span>
             <p className="text-[11px] text-slate-400 text-left leading-relaxed">
-              ¿Usas la app en el celular? Ingresa un apodo y conéctate online al instante con amigos sin errores de redirección.
+              {isCapacitor 
+                ? "Escribe un apodo de usuario para conectarte de inmediato en tiempo real con otros coleccionistas y empezar a canjear." 
+                : "¿Usas la app en el celular? Ingresa un apodo y conéctate online al instante con amigos sin errores de redirección."}
             </p>
             <form onSubmit={handleAnonymousSubmit} className="space-y-3 pt-1">
               <input

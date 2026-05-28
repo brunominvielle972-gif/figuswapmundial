@@ -68,6 +68,9 @@ interface AppContextType {
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   loginAnonymously: (name: string) => Promise<{ success: boolean; error?: string; isSimulated?: boolean }>;
   logout: () => Promise<void>;
+  isCapacitor: boolean;
+  banUser: (userId: string) => void;
+  bannedUids: string[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -113,6 +116,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentTradeMessages, setCurrentTradeMessages] = useState<TradeMessage[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [connectionNotification, setConnectionNotification] = useState<string | null>(null);
+
+  const [bannedUids, setBannedUids] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return JSON.parse(localStorage.getItem('sticker_banned_uids') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const banUser = (userId: string) => {
+    if (!userId) return;
+    setBannedUids(prev => {
+      if (prev.includes(userId)) return prev;
+      const updated = [...prev, userId];
+      localStorage.setItem('sticker_banned_uids', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const clearConnectionNotification = () => setConnectionNotification(null);
 
@@ -267,6 +291,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             email: user.email || `${name.toLowerCase().replace(/\s+/g, '')}_anon@figus.com`,
             createdAt: new Date().toISOString()
           };
+
+          if (user.email === 'brunominvielle972@gmail.com') {
+            localStorage.setItem('admin_master_access', 'true');
+            localStorage.setItem('admin_user_uid', user.uid);
+          }
+
+          // If a simulated user is active, override currentUser but keep the authenticated Google email in logs
+          if (selectedSimUserId && selectedSimUserId !== user.uid) {
+            const list = simGetUsers().filter(u => !isFakeUid(u.uid) && !isFakeUser(u.displayName));
+            const matched = list.find(u => u.uid === selectedSimUserId);
+            if (matched) {
+              setCurrentUser(matched);
+              return;
+            }
+          }
+
           setCurrentUser(profile);
           
           // Save real user profile to database (non-blocking, warning only to prevent auth crashes)
@@ -276,11 +316,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           });
         } else {
           // If no Auth user, check if we have a locally saved nickname user!
-          if (selectedSimUserId && selectedSimUserId.startsWith('user_')) {
+          if (selectedSimUserId) {
             const list = simGetUsers().filter(u => !isFakeUid(u.uid) && !isFakeUser(u.displayName));
             const matched = list.find(u => u.uid === selectedSimUserId);
             if (matched) {
               setCurrentUser(matched);
+              if (matched.email === 'brunominvielle972@gmail.com') {
+                localStorage.setItem('admin_master_access', 'true');
+                localStorage.setItem('admin_user_uid', matched.uid);
+              }
             } else {
               setCurrentUser(null);
             }
@@ -294,9 +338,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // In simulator mode, automatically bind the selected simulation user
       const list = simGetUsers().filter(u => !isFakeUid(u.uid) && !isFakeUser(u.displayName));
       setUsers(list);
+      
       const matched = list.find(u => u.uid === selectedSimUserId);
       if (matched) {
         setCurrentUser(matched);
+        if (matched.email === 'brunominvielle972@gmail.com') {
+          localStorage.setItem('admin_master_access', 'true');
+          localStorage.setItem('admin_user_uid', matched.uid);
+        }
       }
     }
   }, [selectedSimUserId]);
@@ -460,6 +509,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithGoogle = async () => {
+    // Detect Capacitor native app wrapper (APK context)
+    const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capacitor;
+    if (isCapacitorApp) {
+      return { 
+        success: false, 
+        error: "Google bloquea el inicio de sesión con Google (Redirect) dentro de aplicaciones APK por seguridad de WebView. Por favor, usa la de 'Ingresar con tu Apodo' para conectarte al instante online dentro del APK nativo, o accede desde el navegador Chrome de tu teléfono si prefieres obligatoriamente usar tu cuenta de Google." 
+      };
+    }
+
     if (isRealFirebase && auth) {
       const provider = new GoogleAuthProvider();
       
@@ -556,6 +614,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(null);
     localStorage.removeItem('my_saved_sim_user_id');
     localStorage.removeItem('my_saved_anon_display_name');
+    localStorage.removeItem('admin_master_access');
+    localStorage.removeItem('admin_user_uid');
   };
 
   // Add a sticker to current user's inventory
@@ -841,13 +901,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const filteredUsers = users.filter(u => !bannedUids.includes(u.uid));
+  const filteredStickers = stickers.filter(s => !bannedUids.includes(s.ownerId));
+  const filteredTrades = trades.filter(t => !bannedUids.includes(t.proposerId) && !bannedUids.includes(t.receiverId));
+
   return (
     <AppContext.Provider value={{
       currentUser,
       selectedSimUserId,
-      users,
-      stickers,
-      trades,
+      users: filteredUsers,
+      stickers: filteredStickers,
+      trades: filteredTrades,
       currentTradeMessages,
       activeTradeId,
       isFirebaseActive: isRealFirebase,
@@ -868,7 +932,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       connectUserByCode,
       loginWithGoogle,
       loginAnonymously,
-      logout
+      logout,
+      isCapacitor: typeof window !== 'undefined' && !!(window as any).Capacitor,
+      banUser,
+      bannedUids
     }}>
       {children}
     </AppContext.Provider>

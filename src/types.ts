@@ -17,7 +17,7 @@ export interface Sticker {
   code: string; // e.g. "ARG-10"
   playerName: string;
   country: string;
-  type: 'repetida' | 'faltante'; // repetida = duplicate to offer, faltante = wanted
+  type: 'repetida' | 'faltante' | 'coleccionada'; // repetida = duplicate to offer, faltante = wanted, coleccionada = owned in album
   isShiny: boolean;
   quantity: number;
   updatedAt: string;
@@ -102,7 +102,8 @@ export const COUNTRIES = [
   "Turquía",
   "Estados Unidos",
   "Uruguay",
-  "Uzbekistán"
+  "Uzbekistán",
+  "FWC"
 ];
 
 // Map of country name to flag code (FlagCDN compatible)
@@ -154,7 +155,8 @@ export const COUNTRY_FLAG_MAP: Record<string, string> = {
   "Turquía": "tr",
   "Estados Unidos": "us",
   "Uruguay": "uy",
-  "Uzbekistán": "uz"
+  "Uzbekistán": "uz",
+  "FWC": "un"
 };
 
 // Map of country name to official 3-letter code
@@ -206,7 +208,8 @@ export const COUNTRY_CODE_MAP: Record<string, string> = {
   "Turquía": "TUR",
   "Estados Unidos": "USA",
   "Uruguay": "URU",
-  "Uzbekistán": "UZB"
+  "Uzbekistán": "UZB",
+  "FWC": "FWC"
 };
 
 export interface TeamChecklistConfig {
@@ -223,10 +226,35 @@ export const TEAMS_CONFIG: TeamChecklistConfig[] = COUNTRIES.map(country => ({
   code: COUNTRY_CODE_MAP[country] || country.substring(0, 3).toUpperCase(),
   flagCode: COUNTRY_FLAG_MAP[country] || "un",
   startNum: 1,
-  endNum: 20
+  endNum: country === "FWC" ? 19 : 20
 }));
 
 export function isDefaultShiny(code: string): boolean {
   return false;
+}
+
+export function getOfficialPlayerName(code: string): string {
+  const parts = code.trim().split(/[\s-]+/);
+  if (parts.length < 2) return code;
+  const prefix = parts[0].toUpperCase();
+  const num = parseInt(parts[1], 10);
+  if (isNaN(num)) return code;
+
+  // Find country name from prefix reverse lookup
+  let countryName = "";
+  for (const [name, c] of Object.entries(COUNTRY_CODE_MAP)) {
+    if (c === prefix) {
+      countryName = name;
+      break;
+    }
+  }
+
+  // Number 1 is always the emblem/shield for any country
+  if (num === 1) {
+    return countryName ? `Escudo ${countryName}` : `Escudo ${prefix}`;
+  }
+
+  // For numbers 2-20, we just return the cleaned up sticker code itself so player names are removed
+  return code.trim().toUpperCase();
 }
 

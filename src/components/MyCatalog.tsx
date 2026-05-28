@@ -5,18 +5,21 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { COUNTRIES, COUNTRY_FLAG_MAP, COUNTRY_CODE_MAP, TEAMS_CONFIG, isDefaultShiny } from '../types';
-import { Plus, Trash2, ClipboardCheck, Sparkles, Check, X, ShieldCheck, HelpCircle } from 'lucide-react';
+import { COUNTRIES, COUNTRY_FLAG_MAP, COUNTRY_CODE_MAP, TEAMS_CONFIG, isDefaultShiny, getOfficialPlayerName } from '../types';
+import { 
+  Plus, Trash2, ClipboardCheck, Sparkles, Check, X, ShieldCheck, 
+  HelpCircle, Trophy, Percent, Flame, ShoppingBag, Eye, RefreshCcw, Award, Lightbulb 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function MyCatalog() {
-  const { stickers, currentUser, addSticker, removeSticker, loginWithGoogle, loginAnonymously, isFirebaseActive } = useApp();
+  const { stickers, currentUser, addSticker, removeSticker, loginWithGoogle, loginAnonymously, isFirebaseActive, isCapacitor } = useApp();
   const [localName, setLocalName] = useState("");
-  
+
   // Form and interactive modal states
   const [country, setCountry] = useState<string>("Argentina");
   const [codeNum, setCodeNum] = useState<string>("10");
-  const [stickerType, setStickerType] = useState<'repetida' | 'faltante'>("repetida");
+  const [stickerType, setStickerType] = useState<'repetida' | 'faltante' | 'coleccionada'>("coleccionada");
   const [isShiny, setIsShiny] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -94,46 +97,62 @@ export default function MyCatalog() {
             </div>
           )}
 
-          {/* Opción A: Google Auth */}
+          {/* Option A: Google Auth */}
           {isFirebaseActive && (
             <div className="space-y-2">
-              <span className="block text-[10px] font-black uppercase text-slate-500 tracking-widest text-left mb-1">Opción A: Sesión con Google (Web)</span>
-              <button
-                onClick={handleGoogleLogin}
-                disabled={isLoggingIn}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200 disabled:opacity-50"
-              >
-                <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-                  <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                    <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.4C21.68,11.75 21.56,11.4 21.35,11.1z" fill="#4285F4" />
-                    <path d="M12,20.82c2.4,0 4.41,-0.8 5.88,-2.16l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.26,-1.56 -4.96,-3.66H2.9V16.1C4.38,19.04 7.42,20.82 12,20.82z" fill="#34A853" />
-                    <path d="M7.04,13.4a5.3,5.3,0,0,1,0,-3.38V7.44H2.9a10,10,0,0,0,0,8.54l4.14,-2.58z" fill="#FBBC05" />
-                    <path d="M12,6.94c1.3,0 2.48,0.45 3.4,1.33l2.55,-2.55C16.4,4.35 14.41,3.54 12,3.54c-4.58,0 -7.62,1.78 -9.1,4.72l4.14,2.58c0.7,-2.1 2.65,-3.66 4.96,-3.66z" fill="#EA4335" />
-                  </g>
-                </svg>
-                {isLoggingIn ? "Conectando..." : "Iniciar Sesión con Google"}
-              </button>
+              <span className="block text-[10px] font-black uppercase text-slate-500 tracking-widest text-left mb-1">
+                Option A: Sign in with Google {isCapacitor ? "⚠️ (Not available inside APK)" : "(Web)"}
+              </span>
+              {isCapacitor ? (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-left text-xs text-amber-200 leading-relaxed font-semibold">
+                  <p className="mb-1 text-amber-400">⚠️ Google Authentication Limitation:</p>
+                  Google blocks standard web redirects within standalone APK sandboxes (WebViews).
+                  <span className="block mt-1.5 text-[10px] text-slate-400 font-normal">
+                    💡 Please use <strong>Option B (Direct Nickname Login)</strong> below. It works 100% online in the mobile app for trading stickers with nearby users!
+                  </span>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoggingIn}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#fff] hover:bg-slate-100 text-[#1f2937] font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 border border-slate-200 disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                      <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.4C21.68,11.75 21.56,11.4 21.35,11.1z" fill="#4285F4" />
+                      <path d="M12,20.82c2.4,0 4.41,-0.8 5.88,-2.16l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.26,-1.56 -4.96,-3.66H2.9V16.1C4.38,19.04 7.42,20.82 12,20.82z" fill="#34A853" />
+                      <path d="M7.04,13.4a5.3,5.3,0,0,1,0,-3.38V7.44H2.9a10,10,0,0,0,0,8.54l4.14,-2.58z" fill="#FBBC05" />
+                      <path d="M12,6.94c1.3,0 2.48,0.45 3.4,1.33l2.55,-2.55C16.4,4.35 14.41,3.54 12,3.54c-4.58,0 -7.62,1.78 -9.1,4.72l4.14,2.58c0.7,-2.1 2.65,-3.66 4.96,-3.66z" fill="#EA4335" />
+                    </g>
+                  </svg>
+                  {isLoggingIn ? "Connecting..." : "Sign In with Google"}
+                </button>
+              )}
             </div>
           )}
 
           <div className="flex items-center">
             <div className="flex-1 border-t border-white/5"></div>
-            <span className="px-3 text-[9px] text-slate-500 font-bold uppercase tracking-wider">O TAMBIÉN</span>
+            <span className="px-3 text-[9px] text-slate-500 font-bold uppercase tracking-wider">OR ELSE</span>
             <div className="flex-1 border-t border-white/5"></div>
           </div>
 
-          {/* Opción B: Anonymous Online Access */}
+          {/* Option B: Anonymous Online Access */}
           <div className="space-y-3">
-            <span className="block text-[10px] font-black uppercase text-brand-emerald tracking-widest text-left">Opción B: Acceso Rápido (Recomendado APK / Celular)</span>
+            <span className="block text-[10px] font-black uppercase text-brand-emerald tracking-widest text-left">
+              {isCapacitor ? "⚽ Direct Login with Nickname (Recommended)" : "Option B: Fast Connect with Nickname"}
+            </span>
             <p className="text-[11px] text-slate-400 text-left leading-relaxed">
-              ¿Usas la app en el celular? Ingresa un apodo y conéctate online al instante con amigos sin errores de redirección.
+              {isCapacitor 
+                ? "Type a moniker/nickname to immediately connect online with other collectors on active trades." 
+                : "Using the app on mobile? Enter a nickname to seamlessly connect online to the network without redirections."}
             </p>
             <form onSubmit={handleAnonymousSubmit} className="space-y-3 pt-1">
               <input
                 type="text"
                 required
                 maxLength={25}
-                placeholder="Escribe tu Nombre o Apodo..."
+                placeholder="Type your name or nickname..."
                 value={localName}
                 onChange={(e) => setLocalName(e.target.value)}
                 className="w-full bg-[#040c06] border border-brand-emerald/20 hover:border-brand-emerald/40 rounded-xl px-4 py-3 text-xs text-center text-white focus:outline-none focus:border-brand-emerald font-bold placeholder:text-slate-600"
@@ -143,7 +162,7 @@ export default function MyCatalog() {
                 disabled={isLoggingIn}
                 className="w-full py-3 px-4 bg-brand-emerald hover:bg-emerald-400 text-brand-bg font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.1)] border border-transparent disabled:opacity-50"
               >
-                {isLoggingIn ? "Conectando..." : "⚽ Entrar Online al Instante 🚀"}
+                {isLoggingIn ? "Connecting..." : "⚽ Connect Online Instantly 🚀"}
               </button>
             </form>
           </div>
@@ -155,6 +174,26 @@ export default function MyCatalog() {
   // Filter stickers belonging to current authenticated/simulated user
   const myStickers = stickers.filter(s => s.ownerId === currentUser.uid);
 
+  // 1. Unique Registered stickers (In Album or Duplicates)
+  const registeredUniqueCodes = new Set(
+    myStickers
+      .filter(s => s.type === 'coleccionada' || s.type === 'repetida')
+      .map(s => s.code.trim().toUpperCase())
+  );
+  const uniqueRegistered = registeredUniqueCodes.size;
+  const totalStickersToCollect = TEAMS_CONFIG.reduce((sum, t) => sum + (t.endNum - t.startNum + 1), 0);
+  const completionPercent = totalStickersToCollect > 0 ? (uniqueRegistered / totalStickersToCollect) * 100 : 0;
+  const completionPercentStr = completionPercent.toFixed(1);
+
+  // 2. Duplicates count
+  const totalDuplicatesCount = myStickers
+    .filter(s => s.type === 'repetida')
+    .reduce((sum, s) => sum + (s.quantity || 1), 0);
+
+  // 3. Collection categories
+  const totalInAlbum = myStickers.filter(s => s.type === 'coleccionada').length;
+  const totalMissing = myStickers.filter(s => s.type === 'faltante').length;
+
   // Helper to find sticker in my catalog by normalized code
   const getMyStickerByCode = (code: string) => {
     return myStickers.find(s => s.code.replace(/\s+/g, '').toUpperCase() === code.replace(/\s+/g, '').toUpperCase());
@@ -165,8 +204,10 @@ export default function MyCatalog() {
     setCodeNum(sanitized);
     if (sanitized) {
       const num = parseInt(sanitized, 10);
-      if (num < 1 || num > 20) {
-        setValidationError(`Invalid number: ${sanitized}. Numbers on the official board must be between 1 and 20.`);
+      const selectedTeam = TEAMS_CONFIG.find(t => t.name === country);
+      const maxNum = selectedTeam ? selectedTeam.endNum : 20;
+      if (num < 1 || num > maxNum) {
+        setValidationError(`Invalid number: ${sanitized}. Numbers on the official board must be between 1 and ${maxNum}.`);
       } else {
         setValidationError(null);
       }
@@ -183,9 +224,12 @@ export default function MyCatalog() {
       return;
     }
 
+    const selectedTeam = TEAMS_CONFIG.find(t => t.name === country);
+    const maxNum = selectedTeam ? selectedTeam.endNum : 20;
+
     const numInt = parseInt(codeNum.trim(), 10);
-    if (isNaN(numInt) || numInt < 1 || numInt > 20) {
-      setValidationError(`Error: Sticker number (${codeNum}) is invalid. It must be strictly between 1 and 20.`);
+    if (isNaN(numInt) || numInt < 1 || numInt > maxNum) {
+      setValidationError(`Error: Sticker number (${codeNum}) is invalid. It must be strictly between 1 and ${maxNum}.`);
       return;
     }
 
@@ -198,23 +242,24 @@ export default function MyCatalog() {
     // Add or merge
     addSticker({
       code: finalCode,
-      playerName: finalCode, // Keeps code as description label
+      playerName: getOfficialPlayerName(finalCode), // Keeps code as description label
       country,
       type: stickerType,
       isShiny: false,
       quantity: stickerType === 'repetida' ? quantity : 1
     }).then(res => {
       if (res.success) {
-        showToast('success', `¡Figurita ${finalCode} guardada como ${stickerType === 'repetida' ? 'REPETIDA' : 'FALTANTE'}!`);
+        const typeLabel = stickerType === 'repetida' ? 'DUPLICATE' : stickerType === 'coleccionada' ? 'IN ALBUM' : 'MISSING';
+        showToast('success', `Sticker ${finalCode} (${getOfficialPlayerName(finalCode)}) saved as ${typeLabel}!`);
       } else {
-        showToast('error', `Error al guardar: ${res.error || 'Intente nuevamente'}`);
+        showToast('error', `Error saving: ${res.error || 'Please try again'}`);
       }
     });
 
     // Increment number automatically for fast loading
     setCodeNum((prev) => {
       const nextNum = parseInt(prev, 10);
-      if (isNaN(nextNum) || nextNum >= 20) {
+      if (isNaN(nextNum) || nextNum >= maxNum) {
         return "1";
       }
       return String(nextNum + 1);
@@ -224,7 +269,7 @@ export default function MyCatalog() {
   };
 
   // Perform quick-toggle actions from the Tablilla de Control grid
-  const handleQuickAssign = (type: 'repetida' | 'faltante' | 'remove') => {
+  const handleQuickAssign = (type: 'repetida' | 'faltante' | 'coleccionada' | 'remove') => {
     if (!activeQuickEdit) return;
 
     const existing = getMyStickerByCode(activeQuickEdit.code);
@@ -233,25 +278,26 @@ export default function MyCatalog() {
       if (existing) {
         removeSticker(existing.id).then(res => {
           if (res.success) {
-            showToast('success', `¡Figurita ${activeQuickEdit.code} eliminada de tu colección!`);
+            showToast('success', `Sticker ${activeQuickEdit.code} removed from your collection!`);
           } else {
-            showToast('error', `Error al eliminar: ${res.error || 'Intente de nuevo'}`);
+            showToast('error', `Error removing: ${res.error || 'Please try again'}`);
           }
         });
       }
     } else {
       addSticker({
         code: activeQuickEdit.code,
-        playerName: activeQuickEdit.code,
+        playerName: getOfficialPlayerName(activeQuickEdit.code),
         country: activeQuickEdit.country,
         type: type,
         isShiny: false,
-        quantity: type === 'repetida' ? 1 : 1
+        quantity: 1
       }).then(res => {
         if (res.success) {
-          showToast('success', `¡Figurita ${activeQuickEdit.code} guardada como ${type === 'repetida' ? 'REPETIDA' : 'FALTANTE'}!`);
+          const typeLabel = type === 'repetida' ? 'DUPLICATE' : type === 'coleccionada' ? 'IN ALBUM' : 'MISSING';
+          showToast('success', `Sticker ${activeQuickEdit.code} (${getOfficialPlayerName(activeQuickEdit.code)}) saved as ${typeLabel}!`);
         } else {
-          showToast('error', `Error al guardar: ${res.error || 'Intente de nuevo'}`);
+          showToast('error', `Error saving: ${res.error || 'Please try again'}`);
         }
       });
     }
@@ -280,7 +326,7 @@ export default function MyCatalog() {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* HEADER SECTION - Explaining Tablilla de Control */}
       <div className="p-6 bg-gradient-to-r from-[#0d1f13] to-[#040c06] rounded-2xl border border-brand-emerald/20 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="text-left">
@@ -305,6 +351,110 @@ export default function MyCatalog() {
         </div>
       </div>
 
+      {/* 📊 PROGRESS & METRICS SECTION ("Porcentajes y esas cosas") */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="stats-dashboard-panel">
+        
+        {/* Progress Gauge */}
+        <div className="md:col-span-5 bg-gradient-to-b from-[#0b130e] to-[#040805]/95 border border-brand-emerald/15 rounded-2xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden" id="album-circular-progress">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05),transparent)] pointer-events-none" />
+          
+          <div className="text-left relative z-10">
+            <span className="text-[10px] uppercase tracking-widest font-black text-brand-emerald flex items-center gap-1.5">
+              <Trophy className="w-3.5 h-3.5" /> Progreso del Álbum
+            </span>
+            <h3 className="text-xs font-black tracking-tight text-white uppercase mt-1">Estadísticas Oficiales</h3>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 my-5 relative z-10">
+            <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="56"
+                  cy="56"
+                  r="46"
+                  className="stroke-[#051108] fill-transparent"
+                  strokeWidth="6"
+                />
+                <circle
+                  cx="56"
+                  cy="56"
+                  r="46"
+                  className="stroke-brand-emerald fill-transparent transition-all duration-1000 ease-out"
+                  strokeWidth="6"
+                  strokeDasharray={289.0}
+                  strokeDashoffset={289.0 - (completionPercent / 100) * 289.0}
+                  strokeLinecap="round"
+                  style={{ filter: "drop-shadow(0 0 6px rgba(16,185,129,0.4))" }}
+                />
+              </svg>
+              <div className="absolute text-center mt-[-2px]">
+                <span className="text-lg font-black font-mono text-white leading-none block">
+                  {completionPercentStr}%
+                </span>
+                <span className="text-[8px] uppercase tracking-widest font-black text-slate-400 block mt-0.5">
+                  Llenado
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 w-full text-left">
+              <div className="bg-white/5 border border-white/5 rounded-xl p-2.5 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-slate-400 block leading-tight">Únicas Registradas</span>
+                  <strong className="text-xs font-mono font-black text-white">{uniqueRegistered} <span className="font-sans font-normal text-slate-400">/ {totalStickersToCollect}</span></strong>
+                </div>
+                <Trophy className="w-4 h-4 text-brand-emerald opacity-60" />
+              </div>
+
+              <div className="bg-white/5 border border-white/5 rounded-xl p-2.5 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-slate-400 block leading-tight">Canjes Repetidos</span>
+                  <strong className="text-xs font-mono font-black text-brand-emerald">+{totalDuplicatesCount} <span className="text-[9px] font-sans font-medium text-slate-400">cards</span></strong>
+                </div>
+                <Flame className="w-4 h-4 text-brand-emerald opacity-60" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Categories break-down Cards (7 columns) */}
+        <div className="md:col-span-7 bg-[#0b100d]/90 to-[#030604]/95 border border-brand-emerald/15 rounded-2xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden" id="album-categories-breakdown">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(234,179,8,0.03),transparent)] pointer-events-none" />
+          
+          <div className="text-left">
+            <span className="text-[10px] uppercase tracking-widest font-black text-brand-gold flex items-center gap-1.5">
+              <Percent className="w-3.5 h-3.5 text-brand-gold" /> Desglose Analítico
+            </span>
+            <h3 className="text-xs font-black tracking-tight text-white uppercase mt-1">Categorías de la Colección</h3>
+            <p className="text-[11px] text-slate-400 mt-1">Resumen del estado organizativo de tus figuritas registradas:</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 my-4">
+            <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-800/10 text-center flex flex-col justify-center">
+              <span className="text-[8px] uppercase font-black text-cyan-400 block mb-1">📋 Coleccionadas</span>
+              <span className="text-lg font-mono font-black text-white">{totalInAlbum}</span>
+              <span className="text-[8px] text-slate-400 mt-1 font-mono">En Álbum</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-brand-emerald/5 border border-brand-emerald/10 text-center flex flex-col justify-center">
+              <span className="text-[8px] uppercase font-black text-brand-emerald block mb-1">🔁 Repetidas</span>
+              <span className="text-lg font-mono font-black text-white">{myStickers.filter(s => s.type === 'repetida').length}</span>
+              <span className="text-[8px] text-slate-400 mt-1 font-mono">Para Canje</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-brand-gold/5 border border-brand-gold/10 text-center flex flex-col justify-center">
+              <span className="text-[8px] uppercase font-black text-brand-gold block mb-1">❓ Faltantes</span>
+              <span className="text-lg font-mono font-black text-white">{totalMissing}</span>
+              <span className="text-[8px] text-slate-400 mt-1 font-mono">Buscadas</span>
+            </div>
+          </div>
+          
+          <div className="text-[10px] text-slate-400 flex items-center gap-1 bg-[#060c08]/60 p-2 border border-white/5 rounded-xl text-left">
+            <span className="shrink-0">💡</span>
+            <span>Tus canjes repetidos se publican automáticamente en la pestaña de <b>Mensajes / Trades</b> para que otros usuarios te propongan intercambios.</span>
+          </div>
+        </div>
+
+      </div>
+
       {/* THE OFFICIAL TABLILLA CONTROL BOARD GRID */}
       <div className="bg-brand-panel/90 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl relative" id="tablilla-control-panel">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-3 mb-5">
@@ -320,6 +470,10 @@ export default function MyCatalog() {
             <div className="flex items-center gap-1">
               <span className="w-3 h-3 bg-[#0d1f13] border border-white/15 rounded text-center block" />
               <span>Not registered yet</span>
+            </div>
+            <div className="flex items-center gap-1 text-cyan-400">
+              <span className="w-3 h-3 bg-cyan-600 rounded block shadow" />
+              <span>In Album (Have)</span>
             </div>
             <div className="flex items-center gap-1 text-brand-emerald">
               <span className="w-3 h-3 bg-brand-emerald rounded block shadow" />
@@ -341,7 +495,7 @@ export default function MyCatalog() {
             return (
               <div key={`${name}-${code}`} className="flex flex-col lg:flex-row lg:items-center py-2.5 px-3 bg-[#030704]/40 hover:bg-[#030704]/85 border border-white/5 hover:border-white/10 rounded-xl transition-all gap-3">
                 
-                {/* Column: Flag & Name */}
+                {/* Column: Flag & Name with real-time Team Progress */}
                 <div className="flex items-center gap-2.5 w-full lg:w-48 shrink-0 text-left">
                   <img 
                     src={`https://flagcdn.com/w40/${flagCode}.png`} 
@@ -349,14 +503,44 @@ export default function MyCatalog() {
                     referrerPolicy="no-referrer"
                     className="w-7 h-5 object-cover rounded shadow border border-white/10 shrink-0" 
                   />
-                  <div>
-                    <span className="text-[11px] font-black text-white block uppercase tracking-wider leading-none">
-                      {name}
-                    </span>
-                    <span className="text-[9px] font-mono font-bold text-brand-emerald/80 mt-1 block">
-                      Prefix: {code}
-                    </span>
-                  </div>
+                  {(() => {
+                    // Filter sticker list for those that start with our prefix and are either collected or duplicate
+                    const prefixNorm = code.trim().toUpperCase();
+                    const teamStickers = myStickers.filter(s => {
+                      const cleanStickerCode = s.code.trim().toUpperCase();
+                      // Check if it starts with the prefix followed by space/hyphen/digit
+                      return cleanStickerCode.startsWith(prefixNorm) && (s.type === 'coleccionada' || s.type === 'repetida');
+                    });
+
+                    // Count UNIQUE sticker codes collected for this team (so duplicate quantities don't skew completion percentage)
+                    const uniqueSpecs = new Set(teamStickers.map(s => s.code.trim().toUpperCase()));
+                    const teamOwnedCount = uniqueSpecs.size;
+                    const teamOwnedCountClamped = Math.min(teamOwnedCount, endNum);
+                    const teamPercentage = Math.round((teamOwnedCountClamped / endNum) * 100);
+                    
+                    return (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[11px] font-black text-white block truncate uppercase tracking-wider leading-none">
+                            {name}
+                          </span>
+                          <span className="text-[9.5px] font-mono font-black text-brand-emerald shrink-0">
+                            {teamOwnedCountClamped}/{endNum}
+                          </span>
+                        </div>
+                        {/* Linear Micro progress bar */}
+                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mt-1.5 flex">
+                          <div 
+                            className="h-full bg-brand-emerald rounded-full transition-all duration-300" 
+                            style={{ width: `${teamPercentage}%` }}
+                          />
+                        </div>
+                        <span className="text-[8px] font-mono font-semibold text-slate-500 mt-1 block leading-none">
+                          Prefix: {code}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Grid Numbers box */}
@@ -371,6 +555,8 @@ export default function MyCatalog() {
                     if (mySticker) {
                       if (mySticker.type === 'repetida') {
                         bgStyle = "bg-brand-emerald text-brand-bg font-extrabold border-brand-emerald/20 hover:scale-105 hover:brightness-110 shadow-lg shadow-brand-emerald/10";
+                      } else if (mySticker.type === 'coleccionada') {
+                        bgStyle = "bg-cyan-600 text-white font-extrabold border-cyan-500/20 hover:scale-105 hover:brightness-110 shadow-lg shadow-cyan-600/10";
                       } else {
                         bgStyle = "bg-brand-gold text-[#050a06] font-extrabold border-brand-gold/20 hover:scale-105 hover:brightness-110 shadow-lg shadow-brand-gold/10";
                       }
@@ -439,11 +625,24 @@ export default function MyCatalog() {
                   />
                   
                   <span className="text-lg font-mono font-black text-white tracking-widest">{activeQuickEdit.code}</span>
-                  <span className="text-[10px] text-slate-405 font-bold uppercase tracking-wider">{activeQuickEdit.country}</span>
+                  <span className="text-xs font-black text-brand-gold uppercase tracking-widest mb-1">{getOfficialPlayerName(activeQuickEdit.code)}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeQuickEdit.country}</span>
                   
                   {getMyStickerByCode(activeQuickEdit.code) ? (
-                    <span className="mt-2 text-[9px] font-black uppercase px-2 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/30">
-                      Status: {getMyStickerByCode(activeQuickEdit.code)?.type === 'repetida' ? 'Duplicate' : 'Missing'}
+                    <span className={`mt-2 text-[9px] font-black uppercase px-2 py-0.5 rounded border ${
+                      getMyStickerByCode(activeQuickEdit.code)?.type === 'coleccionada' 
+                        ? 'bg-cyan-950/80 text-cyan-400 border-cyan-800/40' 
+                        : getMyStickerByCode(activeQuickEdit.code)?.type === 'repetida'
+                        ? 'bg-emerald-950/80 text-brand-emerald border-brand-emerald/40'
+                        : 'bg-yellow-950/80 text-brand-gold border-brand-gold/40'
+                    }`}>
+                      Status: {
+                        getMyStickerByCode(activeQuickEdit.code)?.type === 'coleccionada' 
+                          ? 'In Album (Have)' 
+                          : getMyStickerByCode(activeQuickEdit.code)?.type === 'repetida'
+                          ? 'Duplicate (Swap)'
+                          : 'Missing (Want)'
+                      }
                     </span>
                   ) : (
                     <span className="mt-2 text-[9px] text-slate-500 font-medium">Not registered yet</span>
@@ -451,23 +650,29 @@ export default function MyCatalog() {
                 </div>
 
                 {/* Interactive Toggles */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleQuickAssign('coleccionada')}
+                    className="py-2 px-1 bg-cyan-700 hover:bg-cyan-600 text-white font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
+                  >
+                    In Album
+                  </button>
                   <button
                     onClick={() => handleQuickAssign('repetida')}
-                    className="py-2.5 px-1 bg-brand-emerald text-brand-bg font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
+                    className="py-2 px-1 bg-brand-emerald text-brand-bg font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
                   >
-                    Duplicate (Have)
+                    Duplicate
                   </button>
                   <button
                     onClick={() => handleQuickAssign('faltante')}
-                    className="py-2.5 px-1 bg-brand-gold text-brand-bg font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
+                    className="py-2 px-1 bg-brand-gold text-brand-bg font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
                   >
-                    Missing (Want)
+                    Missing
                   </button>
                   <button
                     onClick={() => handleQuickAssign('remove')}
                     disabled={!getMyStickerByCode(activeQuickEdit.code)}
-                    className="py-2.5 px-1 bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-stone-300 font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
+                    className="py-2 px-1 bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-stone-300 font-extrabold text-[10px] uppercase rounded-lg hover:scale-[1.03] transition-all cursor-pointer text-center"
                   >
                     Remove / Clear
                   </button>
@@ -660,12 +865,12 @@ export default function MyCatalog() {
 
                       {/* Card Details information */}
                       <div className="text-left mt-auto pt-2 flex justify-between items-end border-t border-white/5">
-                        <div className="space-y-0.5">
-                          <span className="text-[11px] uppercase font-black text-white block tracking-wider leading-none">
-                            {s.country}
+                        <div className="space-y-0.5 min-w-0 flex-1 pr-2">
+                          <span className="text-[11px] uppercase font-black text-white block truncate tracking-wider leading-none" title={getOfficialPlayerName(s.code)}>
+                            {getOfficialPlayerName(s.code)}
                           </span>
-                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
-                            Official Sticker
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">
+                            {s.country}
                           </span>
                         </div>
 
@@ -740,12 +945,12 @@ export default function MyCatalog() {
 
                       {/* Details information footer */}
                       <div className="text-left mt-auto pt-2 flex justify-between items-end border-t border-white/5">
-                        <div className="space-y-0.5">
-                          <span className="text-[11px] uppercase font-black text-white block tracking-wider leading-none">
-                            {s.country}
+                        <div className="space-y-0.5 min-w-0 flex-1 pr-2">
+                          <span className="text-[11px] uppercase font-black text-white block truncate tracking-wider leading-none" title={getOfficialPlayerName(s.code)}>
+                            {getOfficialPlayerName(s.code)}
                           </span>
-                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
-                            Official Sticker
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">
+                            {s.country}
                           </span>
                         </div>
 

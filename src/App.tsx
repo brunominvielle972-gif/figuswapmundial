@@ -9,12 +9,14 @@ import { isRealFirebase } from './firebase';
 import { 
   Trophy, Handshake, BookOpen, ShieldCheck, HelpCircle, 
   User, RefreshCw, LogIn, LogOut, CheckCircle2, ChevronRight,
-  Sparkles, X
+  Sparkles, X, Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import MyCatalog from './components/MyCatalog';
 import MyTrades from './components/MyTrades';
+import BackofficePanel from './components/BackofficePanel';
 import AIAssistant from './components/AIAssistant';
+import WorldCupInfo from './components/WorldCupInfo';
 
 function AppContent() {
   const { 
@@ -23,11 +25,21 @@ function AppContent() {
     trades,
     connectionNotification,
     clearConnectionNotification,
-    logout
+    logout,
+    users,
+    switchSimUser
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'album' | 'trades'>('album');
+  const [activeTab, setActiveTab] = useState<'album' | 'trades' | 'backoffice'>('album');
   const [showAIChat, setShowAIChat] = useState<boolean>(false);
+
+  const isCreatorAdmin = currentUser?.email === 'brunominvielle972@gmail.com' || 
+    (typeof window !== 'undefined' && localStorage.getItem('admin_master_access') === 'true');
+
+  const isImpersonating = typeof window !== 'undefined' && 
+    localStorage.getItem('admin_master_access') === 'true' && 
+    currentUser && 
+    currentUser.uid !== localStorage.getItem('admin_user_uid');
 
   // Count pending or accepted trades where the current user is active to show a badge
   const activeTradeCount = trades.filter(t => 
@@ -37,6 +49,23 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-brand-bg text-slate-100 flex flex-col pb-20 md:pb-0 font-sans relative overflow-x-hidden" id="app-root-container">
+      
+      {isImpersonating && (
+        <div className="bg-gradient-to-r from-amber-600 to-rose-600 text-white font-bold text-xs py-2 px-4 shadow-lg text-center flex items-center justify-center gap-3 z-50 sticky top-0" id="impersonation-warning-bar">
+          <span className="flex items-center gap-1.5">🎭 <strong>Modo Administrador Supuesto:</strong> Estás navegando como <strong>{currentUser?.displayName}</strong> ({currentUser?.email}).</span>
+          <button 
+            onClick={() => {
+              const creatorUid = localStorage.getItem('admin_user_uid');
+              if (creatorUid) {
+                switchSimUser(creatorUid);
+              }
+            }}
+            className="bg-white hover:bg-slate-100 text-slate-950 px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm select-none"
+          >
+            Volver a Creador 👑
+          </button>
+        </div>
+      )}
       
       {/* Atmosphere Background Glow Elements */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-brand-emerald/10 blur-[130px] rounded-full pointer-events-none z-0"></div>
@@ -92,6 +121,21 @@ function AppContent() {
                   </span>
                 )}
               </button>
+
+              {isCreatorAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('backoffice')}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border ${
+                    activeTab === 'backoffice' 
+                      ? 'bg-gradient-to-b from-brand-card to-brand-panel border-brand-emerald/40 text-brand-emerald shadow-[0_0_15px_rgba(16,185,129,0.15)] font-bold' 
+                      : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent font-medium'
+                  }`}
+                >
+                  <Terminal className="w-4 h-4 text-brand-emerald" />
+                  Creador Panel (Backoffice)
+                </button>
+              )}
 
 
             </nav>
@@ -150,6 +194,10 @@ function AppContent() {
               <MyTrades />
             )}
 
+            {activeTab === 'backoffice' && (
+              <BackofficePanel />
+            )}
+
 
 
           </div>
@@ -204,6 +252,9 @@ function AppContent() {
               </div>
             </div>
 
+            {/* 2026 World Cup Information Box */}
+            <WorldCupInfo />
+
           </div>
 
         </div>
@@ -245,6 +296,18 @@ function AppContent() {
           )}
         </button>
 
+        {isCreatorAdmin && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('backoffice')}
+            className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
+              activeTab === 'backoffice' ? 'text-brand-emerald scale-105 font-bold' : 'text-slate-400 font-medium'
+            }`}
+          >
+            <Terminal className="w-5 h-5" />
+            <span className="text-[10px] uppercase tracking-wider">Backoffice</span>
+          </button>
+        )}
 
       </nav>
 

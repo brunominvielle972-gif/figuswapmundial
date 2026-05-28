@@ -4,6 +4,11 @@
 	"webDir": "dist",
 	"server": {
 		"url": "https://ais-pre-fknnxpd4yizdxu4wifamxw-327281564553.us-west1.run.app",
-		"cleartext": true
+		"cleartext": true,
+		"allowNavigation": [
+			"ais-pre-fknnxpd4yizdxu4wifamxw-327281564553.us-west1.run.app",
+			"ais-dev-fknnxpd4yizdxu4wifamxw-327281564553.us-west1.run.app",
+			"*.run.app"
+		]
 	}
 }
